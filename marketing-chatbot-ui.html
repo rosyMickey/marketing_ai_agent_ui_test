@@ -1,0 +1,1666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marketing AI Content Pilot</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+        
+        .topbar {
+            height: 60px;
+            background: #2c3e50;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .topbar h1 { font-size: 18px; }
+        
+        .data-update {
+            font-size: 12px;
+            color: #bdc3c7;
+        }
+        
+        .selector-group {
+            margin-bottom: 15px;
+        }
+        
+        .selector-group label {
+            display: block;
+            font-size: 12px;
+            color: #2c3e50;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        .selector-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #bdc3c7;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .main-container {
+            display: flex;
+            height: calc(100vh - 60px);
+        }
+        
+        .left-sidebar {
+            width: 280px;
+            background: #f8f9fa;
+            border-right: 1px solid #dee2e6;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        .right-sidebar {
+            width: 300px;
+            background: #f8f9fa;
+            border-left: 1px solid #dee2e6;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: white;
+        }
+        
+        .purpose-selector {
+            padding: 15px 20px;
+            background: #ecf0f1;
+            border-bottom: 1px solid #bdc3c7;
+        }
+        
+        .purpose-selector select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #bdc3c7;
+            border-radius: 4px;
+            margin-top: 5px;
+        }
+        
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #fafafa;
+        }
+        
+        .message {
+            margin-bottom: 15px;
+            max-width: 80%;
+        }
+        
+        .message.user {
+            margin-left: auto;
+            background: #3498db;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 18px 18px 4px 18px;
+        }
+        
+        .message.bot {
+            background: white;
+            padding: 15px;
+            border-radius: 4px 18px 18px 18px;
+            border: 1px solid #e1e8ed;
+        }
+        
+        .chart-container {
+            margin: 15px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+        
+        .chart-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #2c3e50;
+            text-align: left;
+        }
+        
+        .bar-chart {
+            display: flex;
+            align-items: end;
+            height: 150px;
+            gap: 10px;
+            margin: 10px 0;
+            justify-content: flex-start;
+        }
+        
+        .bar {
+            background: linear-gradient(to top, #3498db, #5dade2);
+            border-radius: 4px 4px 0 0;
+            min-width: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+        
+        .bar-value {
+            position: absolute;
+            top: -20px;
+            font-size: 11px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .bar-label {
+            margin-top: 5px;
+            font-size: 10px;
+            text-align: center;
+            color: #7f8c8d;
+        }
+
+        .line-chart-container {
+            position: relative;
+            height: 160px; /* 增大高度 */
+            margin: 20px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            text-align: left;
+        }
+
+        .line-chart {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        .chart-line {
+            fill: none;
+            stroke-width: 2;
+            stroke-linejoin: round;
+            stroke-linecap: round;
+        }
+
+        .chart-axis {
+            stroke: #bdc3c7;
+            stroke-width: 1;
+        }
+
+        .chart-label {
+            font-size: 11px;
+            fill: #34495e; /* 加深颜色提高可读性 */
+            text-anchor: middle;
+        }
+
+        .chart-value-label {
+            font-size: 10px;
+            fill: #2c3e50; /* 加深颜色提高可读性 */
+            text-anchor: middle;
+            font-weight: bold;
+        }
+
+        .chart-title-small {
+            font-size: 14px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .chart-legend {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 10px;
+            font-size: 10px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+        }
+        
+        .metrics-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+            font-size: 12px;
+        }
+        
+        .metrics-table th,
+        .metrics-table td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .metrics-table th {
+            background: #f8f9fa;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .insight-box {
+            background: #e8f6f3;
+            border-left: 4px solid #27ae60;
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 0 4px 4px 0;
+        }
+        
+        .insight-title {
+            font-weight: bold;
+            color: #27ae60;
+            margin-bottom: 5px;
+        }
+        
+        .chat-input {
+            padding: 20px;
+            border-top: 1px solid #dee2e6;
+            background: white;
+        }
+        
+        .input-group {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .input-group input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #bdc3c7;
+            border-radius: 25px;
+            outline: none;
+        }
+        
+        .input-group button {
+            padding: 12px 20px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+        }
+        
+        .section {
+            margin-bottom: 25px;
+        }
+        
+        .section h3 {
+            font-size: 14px;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .control-group {
+            margin-bottom: 15px;
+        }
+        
+        .control-group label {
+            display: block;
+            font-size: 12px;
+            color: #7f8c8d;
+            margin-bottom: 5px;
+        }
+        
+        .control-group select, .control-group input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #bdc3c7;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .guidance-questions {
+            list-style: none;
+        }
+        
+        .guidance-questions li {
+            padding: 8px 12px;
+            margin-bottom: 5px;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: background 0.2s;
+        }
+        
+        .guidance-questions li:hover {
+            background: #e8f4fd;
+            color: #2980b9;
+        }
+        
+        .metrics-list {
+            display: grid;
+            gap: 8px;
+        }
+        
+        .metric-item {
+            padding: 8px 12px;
+            background: white;
+            border-radius: 4px;
+            font-size: 13px;
+            border-left: 3px solid #3498db;
+        }
+        
+        .category-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 10px;
+        }
+        
+        .chip {
+            padding: 8px 16px;
+            background: #e8f4fd;
+            color: #2980b9;
+            border-radius: 20px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+        
+        .chip:hover {
+            background: #d4edda;
+            transform: translateY(-1px);
+        }
+        
+        .chip.selected {
+            background: #3498db;
+            color: white;
+            border: 2px solid #2980b9;
+            box-shadow: 0 2px 4px rgba(52, 152, 219, 0.3);
+        }
+        
+        .voice-of-seller {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 0 4px 4px 0;
+        }
+        
+        .voice-title {
+            font-weight: bold;
+            color: #856404;
+            margin-bottom: 5px;
+        }
+        
+        .metrics-dashboard {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 15px 0;
+            text-align: left;
+        }
+        
+        .metric-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+            text-align: center;
+        }
+        
+        .metric-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #3498db;
+        }
+        
+        .metric-label {
+            font-size: 12px;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+        
+        .trend-chart {
+            height: 100px;
+            display: flex;
+            align-items: end;
+            gap: 3px;
+            margin: 10px 0;
+        }
+
+        .trend-point {
+            width: 8px;
+            background: #3498db;
+            border-radius: 4px 4px 0 0;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .trend-point:hover {
+            transform: scaleY(1.1);
+            background: #2980b9;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .comparison-badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: bold;
+            margin-left: 5px;
+        }
+        
+        .badge-up {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .badge-down {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .pie-chart {
+            width: 160px; /* 增大尺寸 */
+            height: 160px;
+            border-radius: 50%;
+            position: relative;
+        }
+        
+        .pie-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            width: 80px; /* 增大中心圆 */
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .pie-value {
+            position: absolute;
+            font-size: 11px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+        
+        .line-chart {
+            height: 100px;
+            position: relative;
+            margin: 10px 0;
+        }
+        
+        .line-path {
+            stroke: #3498db;
+            stroke-width: 2;
+            fill: none;
+        }
+        
+        .welcome-message {
+            text-align: center;
+            color: #7f8c8d;
+            margin-top: 50px;
+        }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <h1>Marketing AI Content Pilot</h1>
+        <div class="data-update" id="dataUpdate">Data updated: 08/27</div>
+    </div>
+
+    <div class="main-container">
+        <div class="left-sidebar">
+            <div class="section">
+                <h3>Time Period</h3>
+                <div class="control-group">
+                    <select id="timePeriod">
+                        <option>Last 7 days</option>
+                        <option selected>Last 30 days</option>
+                        <option>Last 3 months</option>
+                        <option>Last 6 months</option>
+                        <option>Custom range</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="section">
+                <h3>Quick Questions</h3>
+                <ul class="guidance-questions" id="guidanceQuestions">
+                    <!-- Questions will be populated by JavaScript -->
+                </ul>
+            </div>
+        </div>
+
+        <div class="chat-container">
+            <div class="purpose-selector">
+                <div class="selector-group">
+                    <label>Channel:</label>
+                    <select id="channelSelect">
+                        <option value="">Select Channel</option>
+                    </select>
+                </div>
+                
+                <div class="selector-group" id="purposeGroup" style="display: none;">
+                    <label>Purpose:</label>
+                    <select id="purposeSelect">
+                        <option value="">Select Purpose</option>
+                    </select>
+                </div>
+                
+                <div class="selector-group" id="categoryGroup" style="display: none;">
+                    <label>Categories:</label>
+                    <div class="category-chips" id="categoryChips"></div>
+                </div>
+            </div>
+
+            <div class="chat-messages" id="chatMessages">
+                <div class="welcome-message">
+                    <h3>Welcome to Marketing Analysis Chatbot</h3>
+                    <p>Select a channel and purpose to get started, or ask any question about your marketing data.</p>
+                </div>
+            </div>
+
+            <div class="chat-input">
+                <div class="input-group">
+                    <input type="text" id="messageInput" placeholder="Ask about your marketing performance...">
+                    <button onclick="sendMessage()">Send</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="right-sidebar">
+            <div class="section">
+                <h3>Available Metrics</h3>
+                <div class="metrics-list" id="metricsList">
+                    <!-- Metrics will be populated by JavaScript -->
+                </div>
+            </div>
+
+            <div class="section">
+                <h3>Voice of Seller</h3>
+                <div class="voice-of-seller" id="voiceOfSeller">
+                    <div class="voice-title">🗣️ Recent Feedback</div>
+                    <div style="font-size: 11px; line-height: 1.3;">
+                        "希望能看到更多选品工具教程"<br>
+                        "物流成本分析很实用"<br>
+                        "需要更多合规指导"
+                    </div>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h3>Analysis Features</h3>
+                <div style="font-size: 12px; color: #7f8c8d; line-height: 1.4;">
+                    • Hot Topics Analysis<br>
+                    • Voice of Seller Insights<br>
+                    • Top 3 Content Titles<br>
+                    • Cross-channel Comparison<br>
+                    • Performance Trends<br>
+                    • Custom Chart Generation
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Load configuration and initialize UI
+        const config = {
+            "channels": [
+                {"id": "wechat", "name": "微信订阅号", "purposes": ["branding", "lead_gen", "seller_success", "survey"]},
+                {"id": "wechat_video", "name": "微信视频号", "purposes": ["branding", "lead_gen", "seller_success", "survey"]},
+                {"id": "vhall_live", "name": "直播", "purposes": ["branding", "lead_gen", "seller_success", "survey"]},
+                {"id": "douyin_video", "name": "抖音", "purposes": ["branding", "lead_gen", "seller_success", "survey"]},
+                {"id": "rednote", "name": "小红书", "purposes": ["branding", "lead_gen", "seller_success", "survey"]},
+                {"id": "email", "name": "邮件营销", "purposes": ["branding", "lead_gen", "seller_success", "survey"]}
+            ],
+            "purpose_categories": {
+                "branding": ["branding", "event", "seller_segmentation", "marketplace"],
+                "seller_success": ["seller_education", "amazon_business", "supply_chain", "traffic_and_conversion", "brand_own_tools", "compliance", "SPN", "paid_service"],
+                "survey": ["survey"],
+                "lead_gen": ["marketplace", "lead_or_registration_start_to_launch"]
+            },
+            "metrics": ["impressions", "page_views", "unique_visitors", "open_rate", "cta_clicks", "cta_rate"],
+            "guidance_questions": [
+                "请找出过去三个月在微信渠道北美市场里关于Selection完读率最高的5篇文章。分析他们的用户反馈有哪些。",
+                "比较一下Ads domain在微信订阅号里平均打开率差异。 哪些是历史Top 10和 Last 10 CTR 文章。 总结原因。",
+                "上个月供应链category在直播channel发表过的所有系列直播里，卖家反馈最好的5个主题和最关心的10个问题是什么？",
+                "Compliance category下，哪些promotional类型的邮件标题是打开率更高、更受卖家喜欢的？",
+                "我想发一篇关于选品趋势的微信文章，请基于历史表现，给我一些建议。",
+                "请结合历史数据，帮我分析这个标题在微信渠道/Email渠道/小红书等CTR表现预计如何？标题: 'xxx'"
+            ]
+        };
+
+        let currentChannel = null;
+        let currentPurpose = null;
+        let selectedCategories = [];
+        let currentTimePeriod = 'Last 30 days';
+        
+        // Voice of Seller data based on selections
+        const voiceOfSellerData = {
+            "wechat": {
+                "branding": {
+                    "branding": [
+                        {text: "卖家爆不爆单不清楚 亚马逊爆单不耐误", sentiment: "negative", category: "branding"},
+                        {text: "品牌故事很感人，建议增加视频内容", sentiment: "positive", category: "branding"},
+                        {text: "那日本站会上线这个功能吗？", sentiment: "neutral", category: "branding"}
+                    ],
+                    "event": [
+                        {text: "活动预告很及时，但报名流程可以简化", sentiment: "neutral", category: "event"},
+                        {text: "亚马逊的活动什么时候能覆盖欧洲站？", sentiment: "neutral", category: "event"},
+                        {text: "活动后续跟进做得很好", sentiment: "positive", category: "event"}
+                    ],
+                    "seller_segmentation": [
+                        {text: "卖家分类太粗糙，希望更精细", sentiment: "negative", category: "seller_segmentation"},
+                        {text: "中小卖家的需求不一样", sentiment: "neutral", category: "seller_segmentation"},
+                        {text: "能不能按行业分类？", sentiment: "neutral", category: "seller_segmentation"}
+                    ],
+                    "marketplace": [
+                        {text: "市场信息很有用，但更新不够及时", sentiment: "neutral", category: "marketplace"},
+                        {text: "竞品分析很棒", sentiment: "positive", category: "marketplace"},
+                        {text: "什么时候有东南亚市场数据？", sentiment: "neutral", category: "marketplace"}
+                    ]
+                },
+                "seller_success": {
+                    "seller_education": [
+                        {text: "教育内容很实用，但是能不能更新快一点", sentiment: "neutral", category: "seller_education"},
+                        {text: "新手指导很详细，建议增加视频教程", sentiment: "positive", category: "seller_education"},
+                        {text: "这个政策对中国卖家有什么影响？", sentiment: "neutral", category: "seller_education"}
+                    ],
+                    "amazon_business": [
+                        {text: "亚马逊B2B业务什么时候在中国上线？", sentiment: "neutral", category: "amazon_business"},
+                        {text: "企业采购的门槛太高了", sentiment: "negative", category: "amazon_business"},
+                        {text: "能不能简化认证流程？", sentiment: "neutral", category: "amazon_business"}
+                    ],
+                    "supply_chain": [
+                        {text: "供应链成本越来越高了", sentiment: "negative", category: "supply_chain"},
+                        {text: "物流时效能不能再快一点？", sentiment: "neutral", category: "supply_chain"},
+                        {text: "什么时候有中欧班列的物流方案？", sentiment: "neutral", category: "supply_chain"}
+                    ],
+                    "traffic_and_conversion": [
+                        {text: "流量分析很专业，但术语太多", sentiment: "neutral", category: "traffic_and_conversion"},
+                        {text: "转化率优化建议很有效", sentiment: "positive", category: "traffic_and_conversion"},
+                        {text: "为什么我的广告费用越来越高？", sentiment: "negative", category: "traffic_and_conversion"}
+                    ],
+                    "brand_own_tools": [
+                        {text: "品牌工具太复杂了，能简化吗？", sentiment: "negative", category: "brand_own_tools"},
+                        {text: "品牌备案要多久？", sentiment: "neutral", category: "brand_own_tools"},
+                        {text: "为什么我的品牌申请被拒了？", sentiment: "negative", category: "brand_own_tools"}
+                    ],
+                    "compliance": [
+                        {text: "合规要求越来越严格了", sentiment: "negative", category: "compliance"},
+                        {text: "政策更新太频繁，跟不上", sentiment: "negative", category: "compliance"},
+                        {text: "欧盟的新规定影响大吗？", sentiment: "neutral", category: "compliance"}
+                    ],
+                    "SPN": [
+                        {text: "服务商网络的质量参差不齐", sentiment: "negative", category: "SPN"},
+                        {text: "怎么选择靠谱的服务商？", sentiment: "neutral", category: "SPN"},
+                        {text: "服务商的费用能透明一点吗？", sentiment: "neutral", category: "SPN"}
+                    ],
+                    "paid_service": [
+                        {text: "付费服务的效果怎么样？", sentiment: "neutral", category: "paid_service"},
+                        {text: "价格太贵了，有优惠吗？", sentiment: "negative", category: "paid_service"},
+                        {text: "能不能先试用再付费？", sentiment: "neutral", category: "paid_service"}
+                    ]
+                },
+                "survey": {
+                    "survey": [
+                        {text: "调研问卷太长了，能简化吗？", sentiment: "negative", category: "survey"},
+                        {text: "填完问卷有什么奖励？", sentiment: "neutral", category: "survey"},
+                        {text: "什么时候能看到调研结果？", sentiment: "neutral", category: "survey"}
+                    ]
+                },
+                "lead_gen": {
+                    "marketplace": [
+                        {text: "市场信息很有用，但更新不够及时", sentiment: "neutral", category: "marketplace"},
+                        {text: "竞品分析很棒", sentiment: "positive", category: "marketplace"},
+                        {text: "什么时候有东南亚市场数据？", sentiment: "neutral", category: "marketplace"}
+                    ],
+                    "lead_or_registration_start_to_launch": [
+                        {text: "注册流程太复杂了", sentiment: "negative", category: "lead_gen"},
+                        {text: "能不能支持微信登录？", sentiment: "neutral", category: "lead_gen"},
+                        {text: "新手引导做得不错", sentiment: "positive", category: "lead_gen"}
+                    ]
+                }
+            },
+            "email": {
+                "branding": {
+                    "branding": [
+                        {text: "邮件设计很专业，但打开率还需提升", sentiment: "neutral", category: "branding"},
+                        {text: "品牌一致性做得很好", sentiment: "positive", category: "branding"},
+                        {text: "为什么我的邮件总是进垃圾箱？", sentiment: "negative", category: "branding"}
+                    ],
+                    "marketplace": [
+                        {text: "市场分析报告很有价值", sentiment: "positive", category: "marketplace"},
+                        {text: "竞品对比很详细，很有参考意义", sentiment: "positive", category: "marketplace"},
+                        {text: "这个数据是实时的吗？", sentiment: "neutral", category: "marketplace"}
+                    ]
+                },
+                "lead_gen": {
+                    "lead_or_registration_start_to_launch": [
+                        {text: "注册流程很简单，转化率不错", sentiment: "positive", category: "lead_gen"},
+                        {text: "引导内容很吸引人", sentiment: "positive", category: "lead_gen"},
+                        {text: "什么时候能支持中文界面？", sentiment: "neutral", category: "lead_gen"}
+                    ]
+                }
+            },
+            "vhall_live": {
+                "seller_success": {
+                    "supply_chain": [
+                        {text: "供应链直播很实用，解决了很多实际问题", sentiment: "positive", category: "supply_chain"},
+                        {text: "专家分享很专业，希望能有更多互动", sentiment: "positive", category: "supply_chain"},
+                        {text: "这个方案适用于小卖家吗？", sentiment: "neutral", category: "supply_chain"}
+                    ],
+                    "compliance": [
+                        {text: "合规指导很及时，避免了很多坑", sentiment: "positive", category: "compliance"},
+                        {text: "政策解读很清晰", sentiment: "positive", category: "compliance"},
+                        {text: "欧洲站的合规要求和美国站一样吗？", sentiment: "neutral", category: "compliance"}
+                    ]
+                }
+            },
+            "rednote": {
+                "branding": {
+                    "branding": [
+                        {text: "小红书内容很有创意，互动率很高", sentiment: "positive", category: "branding"},
+                        {text: "图片质量很好，很吸引眼球", sentiment: "positive", category: "branding"},
+                        {text: "亚马逊什么时候在小红书开店？", sentiment: "neutral", category: "branding"}
+                    ],
+                    "event": [
+                        {text: "活动在小红书上传播很快", sentiment: "positive", category: "event"},
+                        {text: "用户参与度很高", sentiment: "positive", category: "event"},
+                        {text: "这个活动可以和抖音联动吗？", sentiment: "neutral", category: "event"}
+                    ]
+                }
+            },
+            "douyin_video": {
+                "branding": {
+                    "branding": [
+                        {text: "抖音的视频效果很棒，但是成本太高", sentiment: "neutral", category: "branding"},
+                        {text: "短视频的传播效果确实好", sentiment: "positive", category: "branding"},
+                        {text: "亚马逊什么时候在抖音开直播？", sentiment: "neutral", category: "branding"}
+                    ],
+                    "event": [
+                        {text: "活动在抖音上曝光量很高", sentiment: "positive", category: "event"},
+                        {text: "用户参与度比其他平台好", sentiment: "positive", category: "event"},
+                        {text: "这个活动能和微信同步吗？", sentiment: "neutral", category: "event"}
+                    ]
+                }
+            },
+            "wechat_video": {
+                "branding": {
+                    "branding": [
+                        {text: "微信视频号的内容质量很高", sentiment: "positive", category: "branding"},
+                        {text: "视频制作成本比图文高很多", sentiment: "neutral", category: "branding"},
+                        {text: "亚马逊的视频号什么时候更新？", sentiment: "neutral", category: "branding"}
+                    ],
+                    "event": [
+                        {text: "视频活动的传播效果很好", sentiment: "positive", category: "event"},
+                        {text: "用户留存率比其他平台高", sentiment: "positive", category: "event"},
+                        {text: "这个活动能做成系列吗？", sentiment: "neutral", category: "event"}
+                    ]
+                }
+            }
+        };
+        
+        // Voice of Seller insights
+        const voiceInsights = {
+            "wechat": "微信用户更偏好深度内容和教育性文章，平均阅读时长比其他平台高40%",
+            "email": "邮件用户对数据分析和报告类内容响应最好，专业性要求较高",
+            "vhall_live": "直播用户最关注实操性内容，问答环节参与度是普通内容的3倍",
+            "rednote": "小红书用户喜欢视觉化内容，图文并茂的帖子互动率提升60%",
+            "douyin_video": "抖音用户注意力集中时间短，前3秒决定是否继续观看",
+            "wechat_video": "微信视频号用户更信任熟人推荐，转发率比其他平台高25%"
+        };
+
+        // Initialize UI
+        function initializeUI() {
+            populateChannels();
+            populateMetrics();
+            populateGuidanceQuestions();
+        }
+
+        function populateChannels() {
+            const selector = document.getElementById('channelSelect');
+            config.channels.forEach(channel => {
+                const option = document.createElement('option');
+                option.value = channel.id;
+                option.textContent = channel.name;
+                selector.appendChild(option);
+            });
+        }
+
+        function populateMetrics() {
+            const metricsList = document.getElementById('metricsList');
+            config.metrics.forEach(metric => {
+                const div = document.createElement('div');
+                div.className = 'metric-item';
+                div.textContent = metric.replace('_', ' ').toUpperCase();
+                metricsList.appendChild(div);
+            });
+        }
+
+        function populateGuidanceQuestions() {
+            const questionsList = document.getElementById('guidanceQuestions');
+            config.guidance_questions.forEach(question => {
+                const li = document.createElement('li');
+                li.textContent = question;
+                li.onclick = () => askQuestion(question);
+                questionsList.appendChild(li);
+            });
+        }
+
+        function selectChannel() {
+            const channelId = document.getElementById('channelSelect').value;
+            if (!channelId) {
+                document.getElementById('purposeGroup').style.display = 'none';
+                document.getElementById('categoryGroup').style.display = 'none';
+                updateVoiceOfSeller();
+                return;
+            }
+            
+            currentChannel = config.channels.find(c => c.id === channelId);
+            
+            // Show purpose selector
+            document.getElementById('purposeGroup').style.display = 'block';
+            
+            // Populate purposes
+            const purposeSelect = document.getElementById('purposeSelect');
+            purposeSelect.innerHTML = '<option value="">Select Purpose</option>';
+            currentChannel.purposes.forEach(purpose => {
+                const option = document.createElement('option');
+                option.value = purpose;
+                option.textContent = purpose.replace('_', ' ').toUpperCase();
+                purposeSelect.appendChild(option);
+            });
+            
+            updateVoiceOfSeller();
+            addMessage(`已选择渠道: ${currentChannel.name}. 请选择营销目的继续。`, 'bot');
+        }
+
+        function updateCategories() {
+            const purpose = document.getElementById('purposeSelect').value;
+            const chipsContainer = document.getElementById('categoryChips');
+            chipsContainer.innerHTML = '';
+            selectedCategories = [];
+            
+            if (!purpose) {
+                document.getElementById('categoryGroup').style.display = 'none';
+                currentPurpose = null;
+                updateVoiceOfSeller();
+                return;
+            }
+            
+            currentPurpose = purpose;
+            document.getElementById('categoryGroup').style.display = 'block';
+            
+            if (config.purpose_categories[purpose]) {
+                config.purpose_categories[purpose].forEach(category => {
+                    const chip = document.createElement('div');
+                    chip.className = 'chip';
+                    chip.textContent = category.replace('_', ' ');
+                    chip.onclick = () => toggleCategory(chip, category);
+                    chipsContainer.appendChild(chip);
+                });
+            }
+            
+            updateVoiceOfSeller();
+        }
+
+        function toggleCategory(chipElement, category) {
+                    chipElement.classList.toggle('selected');
+                    if (selectedCategories.includes(category)) {
+                        selectedCategories = selectedCategories.filter(c => c !== category);
+                    } else {
+                        selectedCategories.push(category);
+                    }
+
+                    updateVoiceOfSeller();
+
+                    // Show metrics dashboard when category is selected
+                    if (selectedCategories.length > 0) {
+                        showMetricsDashboard();
+                    }
+                }
+
+        function showMetricsDashboard() {
+            const voiceFeedback = getContextualVoiceFeedback();
+            const comparisonPeriod = getComparisonPeriod();
+            const metrics = getCategoryMetrics();
+            const barData = getCategoryBarData();
+
+            const dashboard = `
+                <div class="metrics-dashboard">
+                    <div class="metric-card">
+                        <div class="metric-value">${metrics.ctr}% <span class="comparison-badge ${metrics.ctrTrend > 0 ? 'badge-up' : 'badge-down'}">${metrics.ctrTrend > 0 ? '↑' : '↓'} ${Math.abs(metrics.ctrTrend)}%</span></div>
+                        <div class="metric-label">平均CTR (vs ${comparisonPeriod})</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">${metrics.impressions} <span class="comparison-badge ${metrics.impressionsTrend > 0 ? 'badge-up' : 'badge-down'}">${metrics.impressionsTrend > 0 ? '↑' : '↓'} ${Math.abs(metrics.impressionsTrend)}%</span></div>
+                        <div class="metric-label">总曝光量 (vs ${comparisonPeriod})</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">${metrics.openRate}% <span class="comparison-badge ${metrics.openRateTrend > 0 ? 'badge-up' : 'badge-down'}">${metrics.openRateTrend > 0 ? '↑' : '↓'} ${Math.abs(metrics.openRateTrend)}%</span></div>
+                        <div class="metric-label">打开率 (vs ${comparisonPeriod})</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">${metrics.visitors} <span class="comparison-badge ${metrics.visitorsTrend > 0 ? 'badge-up' : 'badge-down'}">${metrics.visitorsTrend > 0 ? '↑' : '↓'} ${Math.abs(metrics.visitorsTrend)}%</span></div>
+                        <div class="metric-label">独立访客 (vs ${comparisonPeriod})</div>
+                    </div>
+                </div>
+
+                <div style="text-align: left;">
+                    ${generateTrendChart()}
+                </div>
+
+                <div class="chart-title" style="text-align: left;">类别表现对比</div>
+                <div class="bar-chart" style="justify-content: flex-start; height: 180px; gap: 15px;">
+                    <div class="bar" style="height: ${barData.current}%;">
+                        <div class="bar-value" style="font-size: 12px; font-weight: bold; color: #2c3e50;">${barData.current}%</div>
+                        <div class="bar-label" style="font-size: 11px; color: #34495e; margin-top: 8px;">${selectedCategories[0] || '类别1'}</div>
+                    </div>
+                    <div class="bar" style="height: ${barData.comparison}%;">
+                        <div class="bar-value" style="font-size: 12px; font-weight: bold; color: #2c3e50;">${barData.comparison}%</div>
+                        <div class="bar-label" style="font-size: 11px; color: #34495e; margin-top: 8px;">对比类别</div>
+                    </div>
+                    <div class="bar" style="height: ${barData.industry}%;">
+                        <div class="bar-value" style="font-size: 12px; font-weight: bold; color: #2c3e50;">${barData.industry}%</div>
+                        <div class="bar-label" style="font-size: 11px; color: #34495e; margin-top: 8px;">行业平均</div>
+                    </div>
+                </div>
+
+                <div style="text-align: left;">
+                    ${generateConversionChart()}
+                </div>
+
+                <div class="chart-title" style="text-align: left;">渠道表现分布</div>
+                <div style="text-align: left;">
+                    ${generatePieChart()}
+                </div>
+
+                <div class="voice-of-seller">
+                    <div class="voice-title">🗣️ 卖家心声</div>
+                    ${voiceFeedback}
+                </div>
+                <div class="insight-box">
+                    <div class="insight-title">📊 Voice of Seller 洞察</div>
+                    ${getVoiceInsight()}
+                </div>
+            `;
+            addMessage(dashboard, 'bot');
+        }
+
+        function generateTrendChart() {
+            const timePeriod = currentTimePeriod;
+            let dataPoints = [];
+            let dates = [];
+            const today = new Date('2024-08-27');
+
+            // 生成基于选择时间段的日期和数据
+            if (timePeriod === 'Last 7 days') {
+                for (let i = 6; i >= 0; i--) {
+                    const date = new Date(today);
+                    date.setDate(today.getDate() - i);
+                    dates.push(date.toLocaleDateString('zh-CN', {month: '2-digit', day: '2-digit'}));
+                    dataPoints.push(Math.floor(60 + Math.random() * 40));
+                }
+            } else if (timePeriod === 'Last 30 days') {
+                // 生成过去30天的数据（每周显示一个点）
+                for (let i = 4; i > 0; i--) {
+                    for (let j = 0; j < 7; j++) {
+                        const date = new Date(today);
+                        date.setDate(today.getDate() - ((i * 7) - j));
+                        if (j === 3) { // 每周中间显示一个日期
+                            dates.push(date.toLocaleDateString('zh-CN', {month: '2-digit', day: '2-digit'}));
+                            dataPoints.push(Math.floor(60 + Math.random() * 40));
+                        }
+                    }
+                }
+                // 添加最后几天
+                dates.push(today.toLocaleDateString('zh-CN', {month: '2-digit', day: '2-digit'}));
+                dataPoints.push(Math.floor(60 + Math.random() * 40));
+            } else if (timePeriod === 'Last 3 months') {
+                // 月度数据
+                dates = ['6月', '7月', '8月'];
+                dataPoints = [70, 85, 90];
+            } else if (timePeriod === 'Last 6 months') {
+                // 双月数据
+                dates = ['3月', '4月', '5月', '6月', '7月', '8月'];
+                dataPoints = [65, 70, 75, 80, 85, 90];
+            } else {
+                dates = ['周期1', '周期2', '周期3', '周期4', '周期5', '周期6'];
+                dataPoints = [70, 75, 80, 85, 90, 95];
+            }
+
+            const maxValue = Math.max(...dataPoints);
+            const minValue = Math.min(...dataPoints);
+            const range = maxValue - minValue;
+            const padding = range * 0.2;
+
+            // 创建折线图SVG
+            return `
+                <div class="line-chart-container">
+                    <div class="chart-title-small">表现指数趋势 - ${getTimePeriodLabel()} (更新于: 08/27)</div>
+                    <svg class="line-chart" viewBox="0 0 500 160" width="100%" height="160">
+                        <!-- Y轴 -->
+                        <line class="chart-axis" x1="50" y1="30" x2="50" y2="130" />
+                        <line class="chart-axis" x1="50" y1="130" x2="450" y2="130" />
+
+                        <!-- 数据点连线 -->
+                        <polyline class="chart-line"
+                            points="${dataPoints.map((value, index) => {
+                                const x = 50 + (index * (400 / (dataPoints.length - 1)));
+                                const y = 130 - ((value - minValue + padding) / (range + padding * 2)) * 100;
+                                return `${x},${y}`;
+                            }).join(' ')}"
+                            stroke="#3498db"
+                            stroke-width="2.5" />
+
+                        <!-- 数据点 -->
+                        ${dataPoints.map((value, index) => {
+                            const x = 50 + (index * (400 / (dataPoints.length - 1)));
+                            const y = 130 - ((value - minValue + padding) / (range + padding * 2)) * 100;
+                            return `
+                                <circle cx="${x}" cy="${y}" r="4" fill="#3498db" stroke="#fff" stroke-width="1.5" />
+                                <text class="chart-value-label" x="${x}" y="${y - 12}">${value}</text>
+                            `;
+                        }).join('')}
+
+                        <!-- X轴标签 -->
+                        ${dates.map((date, index) => {
+                            const x = 50 + (index * (400 / (dates.length - 1)));
+                            return `<text class="chart-label" x="${x}" y="145">${date}</text>`;
+                        }).join('')}
+
+                        <!-- Y轴标签 -->
+                        <text class="chart-label" x="35" y="35">${maxValue}</text>
+                        <text class="chart-label" x="35" y="130">${minValue}</text>
+                    </svg>
+                </div>
+            `;
+        }
+
+        function generateConversionChart() {
+            const timePeriod = currentTimePeriod;
+            let dataPoints = [];
+            let dates = [];
+            const today = new Date('2024-08-27');
+
+            // 生成基于选择时间段的日期和数据
+            if (timePeriod === 'Last 7 days') {
+                for (let i = 6; i >= 0; i--) {
+                    const date = new Date(today);
+                    date.setDate(today.getDate() - i);
+                    dates.push(date.toLocaleDateString('zh-CN', {month: '2-digit', day: '2-digit'}));
+                    dataPoints.push((5 + Math.random() * 4).toFixed(1));
+                }
+            } else if (timePeriod === 'Last 30 days') {
+                // 生成过去30天的数据（每周显示一个点）
+                for (let i = 4; i > 0; i--) {
+                    for (let j = 0; j < 7; j++) {
+                        const date = new Date(today);
+                        date.setDate(today.getDate() - ((i * 7) - j));
+                        if (j === 3) { // 每周中间显示一个日期
+                            dates.push(date.toLocaleDateString('zh-CN', {month: '2-digit', day: '2-digit'}));
+                            dataPoints.push((5 + Math.random() * 4).toFixed(1));
+                        }
+                    }
+                }
+                // 添加最后几天
+                dates.push(today.toLocaleDateString('zh-CN', {month: '2-digit', day: '2-digit'}));
+                dataPoints.push((5 + Math.random() * 4).toFixed(1));
+            } else if (timePeriod === 'Last 3 months') {
+                // 月度数据
+                dates = ['6月', '7月', '8月'];
+                dataPoints = [6.2, 7.5, 8.3];
+            } else if (timePeriod === 'Last 6 months') {
+                // 双月数据
+                dates = ['3月', '4月', '5月', '6月', '7月', '8月'];
+                dataPoints = [5.5, 6.2, 6.8, 7.2, 7.8, 8.3];
+            } else {
+                dates = ['周期1', '周期2', '周期3', '周期4', '周期5', '周期6'];
+                dataPoints = [6.0, 6.8, 7.2, 7.6, 8.0, 8.4];
+            }
+
+            const maxValue = Math.max(...dataPoints.map(Number));
+            const minValue = Math.min(...dataPoints.map(Number));
+            const range = maxValue - minValue;
+            const padding = range * 0.2;
+
+            // 创建折线图SVG
+            return `
+                <div class="line-chart-container">
+                    <div class="chart-title-small">转化率趋势 - ${getTimePeriodLabel()}</div>
+                    <svg class="line-chart" viewBox="0 0 500 160" width="100%" height="160">
+                        <!-- Y轴 -->
+                        <line class="chart-axis" x1="50" y1="30" x2="50" y2="130" />
+                        <line class="chart-axis" x1="50" y1="130" x2="450" y2="130" />
+
+                        <!-- 数据点连线 -->
+                        <polyline class="chart-line"
+                            points="${dataPoints.map((value, index) => {
+                                const x = 50 + (index * (400 / (dataPoints.length - 1)));
+                                const y = 130 - ((value - minValue + padding) / (range + padding * 2)) * 100;
+                                return `${x},${y}`;
+                            }).join(' ')}"
+                            stroke="#27ae60"
+                            stroke-width="2.5" />
+
+                        <!-- 数据点 -->
+                        ${dataPoints.map((value, index) => {
+                            const x = 50 + (index * (400 / (dataPoints.length - 1)));
+                            const y = 130 - ((value - minValue + padding) / (range + padding * 2)) * 100;
+                            return `
+                                <circle cx="${x}" cy="${y}" r="4" fill="#27ae60" stroke="#fff" stroke-width="1.5" />
+                                <text class="chart-value-label" x="${x}" y="${y - 12}">${value}%</text>
+                            `;
+                        }).join('')}
+
+                        <!-- X轴标签 -->
+                        ${dates.map((date, index) => {
+                            const x = 50 + (index * (400 / (dates.length - 1)));
+                            return `<text class="chart-label" x="${x}" y="145">${date}</text>`;
+                        }).join('')}
+
+                        <!-- Y轴标签 -->
+                        <text class="chart-label" x="35" y="35">${maxValue.toFixed(1)}%</text>
+                        <text class="chart-label" x="35" y="130">${minValue.toFixed(1)}%</text>
+                    </svg>
+                </div>
+            `;
+        }
+
+        function generatePieChart() {
+            const channelData = [
+                {name: '微信', value: 35, color: '#3498db'},
+                {name: '邮件', value: 25, color: '#e74c3c'},
+                {name: '直播', value: 15, color: '#f39c12'},
+                {name: '小红书', value: 10, color: '#9b59b6'},
+                {name: '抖音', value: 8, color: '#1abc9c'},
+                {name: '视频号', value: 7, color: '#34495e'}
+            ];
+
+            // 计算圆锥渐变的角度和数值位置
+            let currentAngle = 0;
+            const gradients = channelData.map(item => {
+                const startAngle = currentAngle;
+                const endAngle = currentAngle + (item.value / 100) * 360;
+                currentAngle = endAngle;
+                return `${item.color} ${startAngle}deg ${endAngle}deg`;
+            }).join(', ');
+
+            // 计算数值显示位置
+            const valuePositions = [];
+            currentAngle = 0;
+            channelData.forEach(item => {
+                const middleAngle = currentAngle + (item.value / 100) * 180; // 弧度的一半
+                currentAngle += (item.value / 100) * 360;
+
+                const radius = 60; // 饼图半径
+                const x = 80 + Math.cos((middleAngle - 90) * Math.PI / 180) * radius * 0.7;
+                const y = 80 + Math.sin((middleAngle - 90) * Math.PI / 180) * radius * 0.7;
+
+                valuePositions.push({x, y, value: item.value});
+            });
+
+            return `
+                <div style="display: flex; align-items: center; margin: 20px 0;">
+                    <div class="pie-chart" style="background: conic-gradient(${gradients});">
+                        <div class="pie-center">渠道分布</div>
+                        ${valuePositions.map((pos, index) => `
+                            <text class="pie-value" x="${pos.x}" y="${pos.y}" text-anchor="middle" alignment-baseline="middle">
+                                ${pos.value}%
+                            </text>
+                        `).join('')}
+                    </div>
+                    <div style="margin-left: 25px; font-size: 12px;">
+                        ${channelData.map(item => `
+                            <div style="margin-bottom: 8px; display: flex; align-items: center;">
+                                <span style="display: inline-block; width: 14px; height: 14px; background: ${item.color}; margin-right: 8px; border-radius: 3px;"></span>
+                                <span style="color: #2c3e50; font-weight: 500;">${item.name}: ${item.value}%</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function getChannelColor(channel) {
+            const colors = {
+                'wechat': '#3498db',
+                'email': '#e74c3c',
+                'vhall_live': '#f39c12',
+                'rednote': '#9b59b6',
+                'douyin_video': '#1abc9c',
+                'wechat_video': '#34495e'
+            };
+            return colors[channel] || '#95a5a6';
+        }
+
+        function getTimePeriodLabel() {
+            const periodMap = {
+                'Last 7 days': '过去7天',
+                'Last 30 days': '过去30天',
+                'Last 3 months': '过去3个月',
+                'Last 6 months': '过去6个月',
+                'Custom range': '自定义时段'
+            };
+            return periodMap[currentTimePeriod] || '当前时段';
+        }
+        
+        function getCategoryMetrics() {
+            const category = selectedCategories[0] || 'default';
+            const categoryMetrics = {
+                'branding': { ctr: 14.2, ctrTrend: 3.1, impressions: '52.8K', impressionsTrend: 18.5, openRate: 9.7, openRateTrend: -0.8, visitors: '28.3K', visitorsTrend: 12.4 },
+                'seller_education': { ctr: 16.8, ctrTrend: 4.2, impressions: '38.9K', impressionsTrend: 22.1, openRate: 11.2, openRateTrend: 2.3, visitors: '31.7K', visitorsTrend: 15.8 },
+                'supply_chain': { ctr: 11.5, ctrTrend: -1.2, impressions: '41.3K', impressionsTrend: 8.7, openRate: 8.1, openRateTrend: -2.1, visitors: '19.8K', visitorsTrend: 5.3 },
+                'compliance': { ctr: 13.9, ctrTrend: 2.8, impressions: '29.4K', impressionsTrend: 14.2, openRate: 10.5, openRateTrend: 1.7, visitors: '22.1K', visitorsTrend: 9.6 },
+                'paid_service': { ctr: 18.3, ctrTrend: 5.7, impressions: '33.2K', impressionsTrend: 25.8, openRate: 12.8, openRateTrend: 3.4, visitors: '26.9K', visitorsTrend: 18.2 },
+                'marketplace': { ctr: 15.6, ctrTrend: 2.1, impressions: '47.1K', impressionsTrend: 16.3, openRate: 9.3, openRateTrend: 0.9, visitors: '35.4K', visitorsTrend: 11.7 },
+                'default': { ctr: 12.8, ctrTrend: 2.3, impressions: '45.2K', impressionsTrend: 15.7, openRate: 8.9, openRateTrend: -1.2, visitors: '23.1K', visitorsTrend: 8.4 }
+            };
+            return categoryMetrics[category] || categoryMetrics['default'];
+        }
+        
+        function getCategoryBarData() {
+            const category = selectedCategories[0] || 'default';
+            const barData = {
+                'branding': { current: 88, comparison: 75, industry: 82 },
+                'seller_education': { current: 92, comparison: 78, industry: 85 },
+                'supply_chain': { current: 76, comparison: 82, industry: 79 },
+                'compliance': { current: 84, comparison: 71, industry: 77 },
+                'paid_service': { current: 95, comparison: 68, industry: 81 },
+                'marketplace': { current: 89, comparison: 83, industry: 86 },
+                'default': { current: 85, comparison: 72, industry: 91 }
+            };
+            return barData[category] || barData['default'];
+        }
+        
+        function getComparisonPeriod() {
+            const periodMap = {
+                'Last 7 days': '上周同期',
+                'Last 30 days': '上月同期', 
+                'Last 3 months': '上季同期',
+                'Last 6 months': '去年同期',
+                'Custom range': '上期同期'
+            };
+            return periodMap[currentTimePeriod] || '上期同期';
+        }
+        
+        function updateVoiceOfSeller() {
+            const voiceContainer = document.getElementById('voiceOfSeller');
+            const voiceFeedback = getContextualVoiceFeedback();
+            const insight = getVoiceInsight();
+            const timePeriodFeedback = getTimePeriodFeedback();
+
+            if (currentChannel && currentPurpose && selectedCategories.length > 0) {
+                // Show category-specific voice feedback
+                voiceContainer.innerHTML = `
+                    <div class="voice-title">🗣️ 卖家心声 - ${currentChannel.name} · ${currentPurpose.replace('_', ' ')} · ${selectedCategories[0].replace('_', ' ')}</div>
+                    <div style="font-size: 11px; line-height: 1.4; margin-bottom: 10px; background: #f8f9fa; padding: 8px; border-radius: 4px;">
+                        ${voiceFeedback}
+                        ${timePeriodFeedback ? `<br><br><em style="color: #666;">${timePeriodFeedback}</em>` : ''}
+                    </div>
+                    ${insight ? `<div style="font-size: 10px; color: #856404; font-style: italic;">💡 ${insight}</div>` : ''}
+                `;
+            } else {
+                // Show default voice feedback
+                voiceContainer.innerHTML = `
+                    <div class="voice-title">🗣️ Voice of Seller</div>
+                    <div style="font-size: 11px; line-height: 1.3; margin-bottom: 10px;">
+                        ${voiceFeedback}
+                        ${timePeriodFeedback ? `<br><br><em style="color: #666;">${timePeriodFeedback}</em>` : ''}
+                    </div>
+                    ${insight ? `<div style="font-size: 10px; color: #856404; font-style: italic;">💡 ${insight}</div>` : ''}
+                `;
+            }
+        }
+        
+        function getTimePeriodFeedback() {
+            const feedbackMap = {
+                'Last 7 days': '最近一周的数据变化很大',
+                'Last 30 days': '这个月的表现比上月好了不少',
+                'Last 3 months': '这个季度的数据趋势不错',
+                'Last 6 months': '半年来的整体表现稳定',
+                'Custom range': '这个时间段的数据很有参考价值'
+            };
+            return feedbackMap[currentTimePeriod] || null;
+        }
+        
+        function getContextualVoiceFeedback() {
+            if (!currentChannel || !currentPurpose || selectedCategories.length === 0) {
+                return "请选择渠道、目的和类别查看相关卖家反馈";
+            }
+
+            const channelData = voiceOfSellerData[currentChannel.id];
+            if (!channelData) {
+                return "该渠道暂无卖家反馈数据";
+            }
+
+            const purposeData = channelData[currentPurpose];
+            if (!purposeData) {
+                // Fallback to generic feedback if specific purpose not found
+                const fallbackFeedback = [
+                    `这个${currentPurpose.replace('_', ' ')}目的的内容很有用`,
+                    `希望能有更多${currentPurpose.replace('_', ' ')}的内容`,
+                    `${currentPurpose.replace('_', ' ')}的数据能更详细吗？`
+                ];
+                return fallbackFeedback.map((feedback, index) => {
+                    const sellerType = index === 0 ? '新手卖家' : index === 1 ? '资深卖家' : '中级卖家';
+                    return `💬 "${feedback}" - ${sellerType}`;
+                }).join('<br><br>');
+            }
+
+            // Try to find feedback for the selected category
+            let categoryData = null;
+            for (const category of selectedCategories) {
+                if (purposeData[category]) {
+                    categoryData = purposeData[category];
+                    break;
+                }
+            }
+
+            if (!categoryData) {
+                // Fallback to first available category in the purpose
+                const availableCategories = Object.keys(purposeData);
+                if (availableCategories.length > 0) {
+                    categoryData = purposeData[availableCategories[0]];
+                } else {
+                    // Final fallback to generic feedback
+                    const fallbackFeedback = [
+                        `这个${selectedCategories[0].replace('_', ' ')}类别的内容很有用`,
+                        `希望能有更多${selectedCategories[0].replace('_', ' ')}的案例`,
+                        `${selectedCategories[0].replace('_', ' ')}的数据能更详细吗？`
+                    ];
+                    return fallbackFeedback.map((feedback, index) => {
+                        const sellerType = index === 0 ? '新手卖家' : index === 1 ? '资深卖家' : '中级卖家';
+                        return `💬 "${feedback}" - ${sellerType}`;
+                    }).join('<br><br>');
+                }
+            }
+
+            return categoryData.map((feedback, index) => {
+                const sellerType = index === 0 ? '新手卖家' : index === 1 ? '资深卖家' : '中级卖家';
+                return `💬 "${feedback.text}" - ${sellerType} (${feedback.sentiment})`;
+            }).join('<br><br>');
+        }
+        
+        function getVoiceInsight() {
+            if (!currentChannel) {
+                return null;
+            }
+            
+            return voiceInsights[currentChannel.id] || null;
+        }
+
+        function askQuestion(question) {
+            document.getElementById('messageInput').value = question;
+            sendMessage();
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            if (!message) return;
+            
+            addMessage(message, 'user');
+            input.value = '';
+            
+            // Simulate bot response
+            setTimeout(() => {
+                const context = currentChannel ? `Based on ${currentChannel.name} data` : 'Based on available data';
+                const categories = selectedCategories.length > 0 ? ` for ${selectedCategories.join(', ')}` : '';
+                addMessage(`${context}${categories}: ${generateResponse(message)}`, 'bot');
+            }, 1000);
+        }
+
+        function generateResponse(question) {
+            // Generate fake data based on question type
+            if (question.includes('完读率') || question.includes('CTR')) {
+                return generateCTRAnalysis();
+            } else if (question.includes('打开率') || question.includes('open rate')) {
+                return generateOpenRateAnalysis();
+            } else if (question.includes('直播') || question.includes('live')) {
+                return generateLiveAnalysis();
+            } else if (question.includes('标题') || question.includes('title')) {
+                return generateTitleAnalysis();
+            } else if (question.includes('选品趋势') || question.includes('product selection')) {
+                return generateProductSelectionAnalysis();
+            } else {
+                return generateGeneralAnalysis();
+            }
+        }
+        
+        function generateCTRAnalysis() {
+            const voiceFeedback = getContextualVoiceFeedback();
+            const insight = getVoiceInsight();
+            
+            return `
+                <div class="chart-title">微信渠道Selection类文章完读率分析 (过去3个月)</div>
+                <table class="metrics-table">
+                    <tr><th>文章标题</th><th>完读率</th><th>阅读量</th><th>用户反馈</th></tr>
+                    <tr><td>亚马逊选品策略全解析</td><td>78.5%</td><td>12,450</td><td>非常实用</td></tr>
+                    <tr><td>2024年热门品类趋势</td><td>76.2%</td><td>9,830</td><td>内容详细</td></tr>
+                    <tr><td>新手选品避坑指南</td><td>74.8%</td><td>15,200</td><td>帮助很大</td></tr>
+                    <tr><td>选品工具使用技巧</td><td>72.1%</td><td>8,650</td><td>操作性强</td></tr>
+                    <tr><td>市场调研方法分享</td><td>69.3%</td><td>11,200</td><td>方法实用</td></tr>
+                </table>
+                <div class="insight-box">
+                    <div class="insight-title">📊 深度洞察</div>
+                    • 实用性强的选品策略文章完读率更高，平均74.2%<br>
+                    • 工具类教程互动率比理论文章高35%<br>
+                    • 北美市场相关内容比其他地区高20%参与度<br>
+                    • 周二发布的文章完读率比周末高28%
+                </div>
+                ${voiceFeedback ? `
+                <div class="voice-of-seller">
+                    <div class="voice-title">🗣️ 卖家深度反馈</div>
+                    ${voiceFeedback}
+                </div>
+                ` : ''}
+                ${insight ? `
+                <div class="insight-box">
+                    <div class="insight-title">💡 Voice of Seller 洞察</div>
+                    ${insight}
+                </div>
+                ` : ''}
+            `;
+        }
+        
+        function generateOpenRateAnalysis() {
+            const voiceFeedback = getContextualVoiceFeedback();
+            const insight = getVoiceInsight();
+            
+            return `
+                <div class="chart-title">Ads Domain微信订阅号打开率对比分析</div>
+                <div class="bar-chart">
+                    <div class="bar" style="height: 80%;"><div class="bar-value">8.2%</div><div class="bar-label">品牌广告</div></div>
+                    <div class="bar" style="height: 65%;"><div class="bar-value">6.5%</div><div class="bar-label">产品推广</div></div>
+                    <div class="bar" style="height: 90%;"><div class="bar-value">9.1%</div><div class="bar-label">教育内容</div></div>
+                    <div class="bar" style="height: 45%;"><div class="bar-value">4.3%</div><div class="bar-label">促销活动</div></div>
+                </div>
+                <div class="insight-box">
+                    <div class="insight-title">🎯 Top 10 vs Last 10 CTR差异分析</div>
+                    Top 10文章平均CTR: 12.8% | Last 10文章平均CTR: 3.2%<br>
+                    主要差异原因：标题吸引力、发布时间、内容质量、用户画像匹配度
+                </div>
+                ${voiceFeedback ? `
+                <div class="voice-of-seller">
+                    <div class="voice-title">🗣️ 相关卖家反馈</div>
+                    ${voiceFeedback}
+                </div>
+                ` : ''}
+                ${insight ? `
+                <div class="insight-box">
+                    <div class="insight-title">💡 Voice of Seller 洞察</div>
+                    ${insight}
+                </div>
+                ` : ''}
+            `;
+        }
+        
+        function generateLiveAnalysis() {
+            return `
+                <div class="chart-title">供应链直播系列 - 卖家反馈分析</div>
+                <div class="insight-box">
+                    <div class="insight-title">🔥 卖家反馈最好的5个主题</div>
+                    1. 物流成本优化策略 (满意度: 94%)<br>
+                    2. 库存管理最佳实践 (满意度: 91%)<br>
+                    3. 供应商谈判技巧 (满意度: 89%)<br>
+                    4. 跨境物流解决方案 (满意度: 87%)<br>
+                    5. 仓储效率提升方法 (满意度: 85%)
+                </div>
+                <div class="insight-box">
+                    <div class="insight-title">❓ 卖家最关心的10个问题</div>
+                    1. 如何降低FBA费用？<br>
+                    2. 海外仓vs FBA如何选择？<br>
+                    3. 库存周转率如何提升？<br>
+                    4. 供应商质量如何把控？<br>
+                    5. 物流时效如何保证？<br>
+                    6. 退货处理最佳方案？<br>
+                    7. 多渠道库存如何统一？<br>
+                    8. 季节性备货策略？<br>
+                    9. 供应链风险如何规避？<br>
+                    10. 成本核算方法优化？
+                </div>
+            `;
+        }
+        
+        function generateTitleAnalysis() {
+            return `
+                <div class="chart-title">标题CTR预测分析</div>
+                <table class="metrics-table">
+                    <tr><th>渠道</th><th>预测CTR</th><th>置信度</th><th>建议</th></tr>
+                    <tr><td>微信订阅号</td><td>7.8%</td><td>85%</td><td>标题长度适中</td></tr>
+                    <tr><td>Email营销</td><td>12.3%</td><td>78%</td><td>添加紧迫感词汇</td></tr>
+                    <tr><td>小红书</td><td>15.6%</td><td>82%</td><td>增加表情符号</td></tr>
+                </table>
+                <div class="insight-box">
+                    <div class="insight-title">💡 优化建议</div>
+                    基于历史数据分析，建议在标题中加入"独家"、"限时"等关键词，预计可提升CTR 15-20%。
+                </div>
+            `;
+        }
+        
+        function generateGeneralAnalysis() {
+            return `
+                <div class="chart-title">营销数据综合分析</div>
+                <div class="bar-chart">
+                    <div class="bar" style="height: 85%;"><div class="bar-value">85%</div><div class="bar-label">微信</div></div>
+                    <div class="bar" style="height: 72%;"><div class="bar-value">72%</div><div class="bar-label">邮件</div></div>
+                    <div class="bar" style="height: 68%;"><div class="bar-value">68%</div><div class="bar-label">直播</div></div>
+                    <div class="bar" style="height: 91%;"><div class="bar-value">91%</div><div class="bar-label">小红书</div></div>
+                </div>
+                <div class="insight-box">
+                    <div class="insight-title">📈 关键发现</div>
+                    小红书渠道表现最佳，用户参与度高达91%。建议增加该渠道投入，优化内容策略。
+                </div>
+            `;
+        }
+
+        function generateProductSelectionAnalysis() {
+            const voiceFeedback = getContextualVoiceFeedback();
+            const insight = getVoiceInsight();
+
+            return `
+                <div class="chart-title">选品趋势文章历史表现分析 (微信渠道)</div>
+                <div class="bar-chart">
+                    <div class="bar" style="height: 85%;"><div class="bar-value">85%</div><div class="bar-label">完读率</div></div>
+                    <div class="bar" style="height: 78%;"><div class="bar-value">78%</div><div class="bar-label">分享率</div></div>
+                    <div class="bar" style="height: 92%;"><div class="bar-value">92%</div><div class="bar-label">实用评分</div></div>
+                </div>
+                <div class="insight-box">
+                    <div class="insight-title">📊 历史表现最佳的文章类型</div>
+                    • 数据分析类: 市场趋势+具体数据支撑 (CTR: 12.5%)<br>
+                    • 案例研究类: 成功卖家选品故事 (CTR: 11.8%)<br>
+                    • 工具教程类: 选品工具使用指南 (CTR: 10.9%)<br>
+                    • 季节性选品: 节假日/季节产品推荐 (CTR: 9.7%)
+                </div>
+                <div class="insight-box">
+                    <div class="insight-title">💡 内容建议</div>
+                    • 标题包含具体数据: "2024年Q1增长最快的5个品类，同比增长67%"<br>
+                    • 结合亚马逊官方数据增加可信度<br>
+                    • 添加实用工具推荐和操作指南<br>
+                    • 包含真实卖家案例和成果展示<br>
+                    • 最佳发布时间: 周二/周四上午10-11点
+                </div>
+                <div class="voice-of-seller">
+                    <div class="voice-title">🗣️ 卖家对选品内容的反馈</div>
+                    <div style="font-size: 11px; line-height: 1.4;">
+                        💬 "选品数据很有用，但希望能更及时更新" - 资深卖家<br><br>
+                        💬 "案例研究最有价值，想知道具体操作步骤" - 中级卖家<br><br>
+                        💬 "季节性选品提醒很及时，帮我抓住了销售机会" - 新手卖家<br><br>
+                        💬 "希望有更多小众品类的数据分析" - 资深卖家
+                    </div>
+                </div>
+                ${insight ? `
+                <div class="insight-box">
+                    <div class="insight-title">💡 Voice of Seller 洞察</div>
+                    ${insight}
+                </div>
+                ` : ''}
+            `;
+        }
+
+        function addMessage(text, sender) {
+            const messagesContainer = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+            
+            if (sender === 'bot' && text.includes('<')) {
+                messageDiv.innerHTML = text;
+            } else {
+                messageDiv.textContent = text;
+            }
+            
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            
+            // Remove welcome message if it exists
+            const welcome = messagesContainer.querySelector('.welcome-message');
+            if (welcome) welcome.remove();
+        }
+
+        // Event listeners
+        document.getElementById('channelSelect').addEventListener('change', selectChannel);
+        document.getElementById('purposeSelect').addEventListener('change', updateCategories);
+        document.getElementById('timePeriod').addEventListener('change', function() {
+            currentTimePeriod = this.value;
+            updateVoiceOfSeller();
+            updateDataTimestamp();
+        });
+        document.getElementById('messageInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') sendMessage();
+        });
+        
+        function updateDataTimestamp() {
+            const now = new Date();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            document.getElementById('dataUpdate').textContent = `Data updated: ${month}/${day}`;
+        }
+
+        // Initialize on load
+        initializeUI();
+        updateDataTimestamp();
+    </script>
+</body>
+</html>
