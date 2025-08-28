@@ -1121,6 +1121,8 @@
                 document.getElementById('purposeGroup').style.display = 'none';
                 document.getElementById('categoryGroup').style.display = 'none';
                 updateVoiceOfSeller();
+                ensureAdvancedFiltersVisibility();
+                saveUIState();
                 return;
             }
             
@@ -1141,6 +1143,9 @@
             
             updateVoiceOfSeller();
             addMessage(`已选择渠道: ${currentChannel.name}. 请选择营销目的继续。`, 'bot');
+            populateDomainAndMarket();
+            ensureAdvancedFiltersVisibility();
+            saveUIState();
         }
 
         function updateCategories() {
@@ -1153,6 +1158,8 @@
                 document.getElementById('categoryGroup').style.display = 'none';
                 currentPurpose = null;
                 updateVoiceOfSeller();
+                ensureAdvancedFiltersVisibility();
+                saveUIState();
                 return;
             }
             
@@ -1170,6 +1177,9 @@
             }
             
             updateVoiceOfSeller();
+            populateDomainAndMarket();
+            ensureAdvancedFiltersVisibility();
+            saveUIState();
         }
 
         function toggleCategory(chipElement, category) {
@@ -1186,6 +1196,8 @@
                     if (selectedCategories.length > 0) {
                         showMetricsDashboard();
                     }
+                    ensureAdvancedFiltersVisibility();
+                    saveUIState();
                 }
 
         function showMetricsDashboard() {
@@ -1879,6 +1891,10 @@
             }
             
             messagesContainer.appendChild(messageDiv);
+            const timeSpan = document.createElement('span');
+            timeSpan.className = 'message-meta';
+            timeSpan.textContent = new Date().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+            messageDiv.appendChild(timeSpan);
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
             
             // Remove welcome message if it exists
@@ -1893,10 +1909,230 @@
             currentTimePeriod = this.value;
             updateVoiceOfSeller();
             updateDataTimestamp();
+            saveUIState();
         });
         document.getElementById('messageInput').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') sendMessage();
         });
+        
+        // New UI wiring
+        function ensureAdvancedFiltersVisibility() {
+            const show = !!(currentChannel && currentPurpose && selectedCategories.length > 0);
+            const af = document.getElementById('advancedFilters');
+            af.style.display = show ? 'grid' : 'none';
+            if (show) populateDomainAndMarket();
+        }
+
+        function populateDomainAndMarket() {
+            const domainSelect = document.getElementById('domainSelect');
+            const marketSelect = document.getElementById('marketSelect');
+            if (!domainSelect || !marketSelect) return;
+            if (domainSelect.options.length <= 1) {
+                ['Ads','Selection','Compliance','Logistics','Tools','Traffic'].forEach(d => {
+                    const o = document.createElement('option'); o.value = d.toLowerCase(); o.textContent = d; domainSelect.appendChild(o);
+                });
+            }
+            if (marketSelect.options.length <= 1) {
+                ['North America','Europe','Japan','CN','SEA'].forEach(m => {
+                    const o = document.createElement('option'); o.value = m.toLowerCase().replace(/\s+/g,'_'); o.textContent = m; marketSelect.appendChild(o);
+                });
+            }
+        }
+
+        // Top N generation and export
+        let currentTopNRows = [];
+        function runTopN() {
+            const metricKey = document.getElementById('metricSelect').value;
+            const topN = parseInt(document.getElementById('topNSelect').value, 10);
+            const domain = document.getElementById('domainSelect').value;
+            const market = document.getElementById('marketSelect').value;
+            const channelName = currentChannel ? currentChannel.name : 'All';
+            const categoryName = selectedCategories[0] ? selectedCategories[0].replace('_',' ') : 'All';
+
+            const rows = Array.from({length: topN}).map((_, i) => {
+                const base = 50 + Math.random() * 45;
+                return {
+                    title: `${categoryName} 内容范例 ${i+1}`,
+                    channel: channelName,
+                    domain: domain || 'mixed',
+                    market: market || 'all',
+                    open: (6 + Math.random() * 6).toFixed(1) + '%',
+                    complete: (60 + Math.random() * 35).toFixed(1) + '%',
+                    engage: (3 + Math.random() * 6).toFixed(1) + '%',
+                    link: '#'
+                };
+            }).sort((a,b) => {
+                const getVal = r => metricKey==='open_rate'? parseFloat(r.open) : metricKey==='completion_rate'? parseFloat(r.complete) : parseFloat(r.engage);
+                return getVal(b) - getVal(a);
+            });
+
+            currentTopNRows = rows;
+            renderTopN(rows, metricKey, topN, channelName, categoryName, domain, market);
+        }
+
+        function renderTopN(rows, metricKey, topN, channelName, categoryName, domain, market) {
+            const panel = document.getElementById('resultsPanel');
+            const title = document.getElementById('resultsTitle');
+            const ctx = document.getElementById('resultsContext');
+            const tbody = document.querySelector('#resultsTable tbody');
+            title.textContent = `${channelName} · ${categoryName} · Top ${topN} by ${metricKey}`;
+            ctx.textContent = `${getTimePeriodLabel()}${domain? ' · '+domain:''}${market? ' · '+market:''}`;
+            tbody.innerHTML = rows.map(r => `
+                <tr>
+                    <td>${r.title}</td>
+                    <td>${r.channel}</td>
+                    <td>${r.domain}</td>
+                    <td>${r.market}</td>
+                    <td>${r.open}</td>
+                    <td>${r.complete}</td>
+                    <td>${r.engage}</td>
+                    <td><a href="${r.link}" target="_blank">View</a></td>
+                </tr>
+            `).join('');
+            panel.style.display = 'block';
+            renderCommentInsights(rows);
+        }
+
+        function renderCommentInsights(rows) {
+            const topics = ['功能咨询','价格疑问','物流发货','使用技巧','积极反馈','投诉建议'];
+            const topCounts = topics.map(t => ({topic: t, count: Math.floor(10 + Math.random()*50)}))
+                                   .sort((a,b)=>b.count-a.count)
+                                   .slice(0,5);
+            document.getElementById('topicClusters').innerHTML = topCounts.map(x=>`<div class="bar-row"><span style="min-width:90px;font-size:12px;">${x.topic}</span><div class="bar" style="width:${x.count*3}px"></div><span style="font-size:12px;">${x.count}</span></div>`).join('');
+
+            const sentiments = [
+                {label:'Positive', cls:'pos', pct: Math.floor(40+Math.random()*30)},
+                {label:'Neutral', cls:'neu', pct: Math.floor(15+Math.random()*25)},
+                {label:'Negative', cls:'neg', pct: Math.floor(5+Math.random()*20)}
+            ];
+            const totalPct = sentiments.reduce((s,x)=>s+x.pct,0);
+            sentiments.forEach(s=>{ if(totalPct>100) s.pct = Math.round(s.pct*100/totalPct); });
+            document.getElementById('sentimentBars').innerHTML = sentiments.map(s=>`<div class="bar-row"><span style="min-width:90px;font-size:12px;">${s.label}</span><div class="bar ${s.cls}" style="width:${s.pct*2.4}px"></div><span style="font-size:12px;">${s.pct}%</span></div>`).join('');
+
+            const samples = [
+                '这个功能是否支持欧洲站点？',
+                '价格有点高，是否有优惠活动？',
+                '物流方案很实用，已收藏',
+                '教程很清晰，建议增加视频版本',
+                '有一些bug，期望尽快修复'
+            ];
+            document.getElementById('sampleComments').innerHTML = samples.map(s=>`💬 ${s}`).join('<br>');
+        }
+
+        function exportTopNCSV() {
+            if (!currentTopNRows || currentTopNRows.length === 0) return;
+            const headers = ['Title','Channel','Domain','Market','Open','Complete','Engage','Link'];
+            const esc = v => '"'+String(v).replace(/"/g,'""')+'"';
+            const csv = [headers.join(',')].concat(currentTopNRows.map(r=>[
+                esc(r.title),esc(r.channel),esc(r.domain),esc(r.market),esc(r.open),esc(r.complete),esc(r.engage),esc(r.link)
+            ].join(','))).join('\n');
+            const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'topn.csv';
+            a.click();
+            URL.revokeObjectURL(a.href);
+        }
+
+        // Chart Builder preview
+        function generateChartPreview() {
+            const dim = document.getElementById('cbDimension').value;
+            const metric = document.getElementById('cbMetric').value;
+            const labels = dim==='domain'? ['Ads','Selection','Compliance','Logistics','Tools'] : dim==='channel'? ['微信','邮件','直播','小红书','抖音'] : ['Branding','Supply','Compliance','Traffic'];
+            const values = labels.map(()=> Math.floor(50+Math.random()*50));
+            const max = Math.max(...values);
+            document.getElementById('cbPreview').innerHTML = labels.map((l,i)=>`<div class="bar-row"><span style="min-width:90px;font-size:12px;">${l}</span><div class="bar" style="width:${values[i]*2.4}px"></div><span style="font-size:12px;">${values[i]}${metric==='open_rate'?'%':''}</span></div>`).join('');
+        }
+
+        // Theme/Layout toggles and persistence
+        function setTheme(dark) {
+            document.body.classList.toggle('dark', !!dark);
+            const btn = document.getElementById('themeToggle');
+            if (btn) btn.textContent = document.body.classList.contains('dark') ? '☀️' : '🌙';
+        }
+
+        function setLayout(compact) {
+            document.body.classList.toggle('compact-layout', !!compact);
+        }
+
+        const STATE_KEY = 'mkt_ui_state_v1';
+        function saveUIState() {
+            const state = {
+                dark: document.body.classList.contains('dark'),
+                compact: document.body.classList.contains('compact-layout'),
+                channel: document.getElementById('channelSelect').value,
+                purpose: document.getElementById('purposeSelect').value,
+                categories: selectedCategories,
+                timePeriod: currentTimePeriod
+            };
+            localStorage.setItem(STATE_KEY, JSON.stringify(state));
+        }
+
+        function loadUIState() {
+            try {
+                const raw = localStorage.getItem(STATE_KEY);
+                if (!raw) return;
+                const s = JSON.parse(raw);
+                setTheme(s.dark);
+                setLayout(s.compact);
+                if (s.timePeriod) {
+                    const tp = document.getElementById('timePeriod'); tp.value = s.timePeriod; currentTimePeriod = s.timePeriod;
+                }
+                if (s.channel) {
+                    const chSel = document.getElementById('channelSelect'); chSel.value = s.channel; selectChannel();
+                }
+                if (s.purpose) {
+                    const pSel = document.getElementById('purposeSelect'); pSel.value = s.purpose; currentPurpose = s.purpose; updateCategories();
+                }
+                if (Array.isArray(s.categories) && s.categories.length) {
+                    const chips = Array.from(document.querySelectorAll('#categoryChips .chip'));
+                    s.categories.forEach(cat => {
+                        const chip = chips.find(c=>c.textContent.replace(/\s/g,'_')===cat);
+                        if (chip && !chip.classList.contains('selected')) chip.click();
+                    });
+                }
+                ensureAdvancedFiltersVisibility();
+            } catch(e) { /* ignore */ }
+        }
+
+        // Scroll-to-bottom and typing indicator
+        const scrollBtn = document.getElementById('scrollBottomBtn');
+        const chatBox = document.getElementById('chatMessages');
+        if (chatBox) {
+            chatBox.addEventListener('scroll', () => {
+                const nearBottom = chatBox.scrollHeight - chatBox.scrollTop - chatBox.clientHeight < 80;
+                scrollBtn.classList.toggle('show', !nearBottom);
+            });
+        }
+        if (scrollBtn) {
+            scrollBtn.addEventListener('click', () => {
+                chatBox.scrollTo({top: chatBox.scrollHeight, behavior: 'smooth'});
+            });
+        }
+
+        // Toolbar and actions
+        const themeBtn = document.getElementById('themeToggle');
+        if (themeBtn) themeBtn.addEventListener('click', () => { setTheme(!document.body.classList.contains('dark')); saveUIState(); });
+        const layoutBtn = document.getElementById('layoutToggle');
+        if (layoutBtn) layoutBtn.addEventListener('click', () => { setLayout(!document.body.classList.contains('compact-layout')); saveUIState(); });
+        const exportChatBtn = document.getElementById('exportChatBtn');
+        if (exportChatBtn) exportChatBtn.addEventListener('click', () => {
+            const items = Array.from(document.querySelectorAll('#chatMessages .message'));
+            const text = items.map(el => `${el.classList.contains('user')?'User':'Bot'}: ${el.innerText}` ).join('\n');
+            const blob = new Blob([text], {type:'text/plain;charset=utf-8;'});
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download='chat.txt'; a.click(); URL.revokeObjectURL(a.href);
+        });
+        const clearChatBtn = document.getElementById('clearChatBtn');
+        if (clearChatBtn) clearChatBtn.addEventListener('click', () => {
+            chatBox.innerHTML = '<div class="welcome-message"><h3>Welcome to Marketing Analysis Chatbot</h3><p>Select a channel and purpose to get started, or ask any question about your marketing data.</p></div>';
+        });
+
+        const runTopNBtn = document.getElementById('runTopNBtn');
+        if (runTopNBtn) runTopNBtn.addEventListener('click', runTopN);
+        const exportTopNBtn = document.getElementById('exportTopNBtn');
+        if (exportTopNBtn) exportTopNBtn.addEventListener('click', exportTopNCSV);
+        const cbBtn = document.getElementById('cbGenerate');
+        if (cbBtn) cbBtn.addEventListener('click', generateChartPreview);
         
         function updateDataTimestamp() {
             const now = new Date();
@@ -1908,6 +2144,7 @@
         // Initialize on load
         initializeUI();
         updateDataTimestamp();
+        loadUIState();
     </script>
 </body>
 </html>
