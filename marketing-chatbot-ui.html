@@ -717,6 +717,77 @@
                     <label>Categories:</label>
                     <div class="category-chips" id="categoryChips"></div>
                 </div>
+
+                <div class="filters-grid" id="advancedFilters" style="margin-top: 8px; display: none;">
+                    <div class="selector-group">
+                        <label>Domain:</label>
+                        <select id="domainSelect">
+                            <option value="">All Domains</option>
+                        </select>
+                    </div>
+                    <div class="selector-group">
+                        <label>Market/Region:</label>
+                        <select id="marketSelect">
+                            <option value="">All Markets</option>
+                        </select>
+                    </div>
+                    <div class="selector-group">
+                        <label>Key Metric:</label>
+                        <select id="metricSelect">
+                            <option value="open_rate">打开率 Open Rate</option>
+                            <option value="completion_rate">完读率 Completion</option>
+                            <option value="engagement_rate">互动率 Engagement</option>
+                        </select>
+                    </div>
+                    <div class="selector-group">
+                        <label>Top N:</label>
+                        <select id="topNSelect">
+                            <option value="5">Top 5</option>
+                            <option value="10" selected>Top 10</option>
+                            <option value="20">Top 20</option>
+                        </select>
+                    </div>
+                    <div class="topn-controls">
+                        <button class="btn" id="runTopNBtn">Find Top N</button>
+                        <button class="btn secondary" id="exportTopNBtn">Export CSV</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="results-panel" id="resultsPanel">
+                <div class="results-header">
+                    <div class="results-title" id="resultsTitle">Top N Results</div>
+                    <span class="pill" id="resultsContext"></span>
+                </div>
+                <table class="results-table" id="resultsTable">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Channel</th>
+                            <th>Domain</th>
+                            <th>Market</th>
+                            <th>Open</th>
+                            <th>Complete</th>
+                            <th>Engage</th>
+                            <th>Link</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+                <div class="insights-grid" style="margin-top: 12px;">
+                    <div class="insight-card">
+                        <div class="chart-title-small">评论主题聚类 Top 5</div>
+                        <div id="topicClusters"></div>
+                    </div>
+                    <div class="insight-card">
+                        <div class="chart-title-small">情感倾向分布</div>
+                        <div id="sentimentBars"></div>
+                    </div>
+                    <div class="insight-card">
+                        <div class="chart-title-small">代表性评论片段</div>
+                        <div id="sampleComments" style="font-size: 12px; line-height: 1.5;"></div>
+                    </div>
+                </div>
             </div>
 
             <div class="chat-messages" id="chatMessages">
@@ -766,6 +837,33 @@
                     • Cross-channel Comparison<br>
                     • Performance Trends<br>
                     • Custom Chart Generation
+                </div>
+            </div>
+
+            <div class="section">
+                <h3>Chart Builder</h3>
+                <div class="chart-builder">
+                    <div class="row">
+                        <div class="control-group">
+                            <label>Dimension</label>
+                            <select id="cbDimension">
+                                <option value="domain" selected>Domain</option>
+                                <option value="category">Biz Category</option>
+                                <option value="channel">Channel</option>
+                            </select>
+                        </div>
+                        <div class="control-group">
+                            <label>Metric</label>
+                            <select id="cbMetric">
+                                <option value="open_rate">Open Rate</option>
+                                <option value="completion_rate">Completion</option>
+                                <option value="engagement_rate">Engagement</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button class="btn" id="cbGenerate">Generate</button>
+                    <div class="chart-title-small" style="margin-top: 8px;">Preview</div>
+                    <div id="cbPreview" class="trend-chart" style="height: 120px; align-items: end;"></div>
                 </div>
             </div>
         </div>
