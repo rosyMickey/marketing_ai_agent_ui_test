@@ -760,13 +760,6 @@
 
         <div class="right-sidebar">
             <div class="section">
-                <h3>Available Metrics</h3>
-                <div class="metrics-list" id="metricsList">
-                    <!-- Metrics will be populated by JavaScript -->
-                </div>
-            </div>
-
-            <div class="section">
                 <h3>Voice of Seller</h3>
                 <div class="voice-of-seller" id="voiceOfSeller">
                     <div class="voice-title">🗣️ Recent Feedback</div>
@@ -1006,9 +999,9 @@
         // Initialize UI
         function initializeUI() {
             populateChannels();
-            populateMetrics();
             populateGuidanceQuestions();
             populateBusinessFilters();
+            populateKPIOptions();
             wireTopbar();
         }
 
@@ -1030,15 +1023,7 @@
             });
         }
 
-        function populateMetrics() {
-            const metricsList = document.getElementById('metricsList');
-            config.metrics.forEach(metric => {
-                const div = document.createElement('div');
-                div.className = 'metric-item';
-                div.textContent = metric.replace('_', ' ').toUpperCase();
-                metricsList.appendChild(div);
-            });
-        }
+        
 
         function populateGuidanceQuestions() {
             const questionsList = document.getElementById('guidanceQuestions');
@@ -1047,6 +1032,31 @@
                 li.textContent = question;
                 li.onclick = () => askQuestion(question);
                 questionsList.appendChild(li);
+            });
+        }
+
+        function populateKPIOptions() {
+            const kpiSelect = document.getElementById('kpiSelect');
+            const base = ['completion_rate','interaction_rate','ctr'];
+            const set = new Set([...config.metrics, ...base]);
+            const label = {
+                impressions: 'Impressions',
+                page_views: 'Page Views',
+                unique_visitors: 'Unique Visitors',
+                open_rate: 'Open Rate',
+                cta_clicks: 'CTA Clicks',
+                cta_rate: 'CTA Rate',
+                completion_rate: 'Completion Rate',
+                interaction_rate: 'Interaction Rate',
+                ctr: 'CTR'
+            };
+            kpiSelect.innerHTML = '';
+            Array.from(set).forEach(key => {
+                const opt = document.createElement('option');
+                opt.value = key;
+                opt.textContent = label[key] || key;
+                if (key === 'open_rate') opt.selected = true;
+                kpiSelect.appendChild(opt);
             });
         }
 
@@ -1963,7 +1973,12 @@
                 id: idx + 1,
                 title: t,
                 link: '#',
+                impressions: Math.floor(20000 + Math.random() * 60000),
+                page_views: Math.floor(5000 + Math.random() * 20000),
+                unique_visitors: Math.floor(3000 + Math.random() * 15000),
                 open_rate: +(6 + Math.random() * 6).toFixed(1),
+                cta_clicks: Math.floor(200 + Math.random() * 2000),
+                cta_rate: +(1 + Math.random() * 6).toFixed(1),
                 completion_rate: +(60 + Math.random() * 35).toFixed(1),
                 interaction_rate: +(2 + Math.random() * 6).toFixed(1),
                 ctr: +(5 + Math.random() * 8).toFixed(1)
