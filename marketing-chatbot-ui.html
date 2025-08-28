@@ -760,13 +760,6 @@
 
         <div class="right-sidebar">
             <div class="section">
-                <h3>Available Metrics</h3>
-                <div class="metrics-list" id="metricsList">
-                    <!-- Metrics will be populated by JavaScript -->
-                </div>
-            </div>
-
-            <div class="section">
                 <h3>Voice of Seller</h3>
                 <div class="voice-of-seller" id="voiceOfSeller">
                     <div class="voice-title">🗣️ Recent Feedback</div>
@@ -1031,13 +1024,21 @@
         }
 
         function populateMetrics() {
-            const metricsList = document.getElementById('metricsList');
+            const kpiSelect = document.getElementById('kpiSelect');
+            if (!kpiSelect) return;
+            const existingValues = new Set(Array.from(kpiSelect.options).map(opt => opt.value));
+            const group = document.createElement('optgroup');
+            group.label = 'Available Metrics';
             config.metrics.forEach(metric => {
-                const div = document.createElement('div');
-                div.className = 'metric-item';
-                div.textContent = metric.replace('_', ' ').toUpperCase();
-                metricsList.appendChild(div);
+                if (existingValues.has(metric)) return;
+                const option = document.createElement('option');
+                option.value = metric;
+                option.textContent = labelForKPI(metric);
+                group.appendChild(option);
             });
+            if (group.children.length > 0) {
+                kpiSelect.appendChild(group);
+            }
         }
 
         function populateGuidanceQuestions() {
@@ -1949,8 +1950,18 @@
         }
 
         function labelForKPI(kpi) {
-            const map = { open_rate: '打开率', completion_rate: '完读率', interaction_rate: '互动率', ctr: 'CTR' };
-            return map[kpi] || kpi;
+            const map = {
+                open_rate: '打开率',
+                completion_rate: '完读率',
+                interaction_rate: '互动率',
+                ctr: 'CTR',
+                impressions: '曝光量',
+                page_views: '浏览量',
+                unique_visitors: '独立访客',
+                cta_clicks: 'CTA点击数',
+                cta_rate: 'CTA率'
+            };
+            return map[kpi] || kpi.replaceAll('_', ' ').toUpperCase();
         }
 
         function generateFakeArticles(sel) {
@@ -1966,7 +1977,12 @@
                 open_rate: +(6 + Math.random() * 6).toFixed(1),
                 completion_rate: +(60 + Math.random() * 35).toFixed(1),
                 interaction_rate: +(2 + Math.random() * 6).toFixed(1),
-                ctr: +(5 + Math.random() * 8).toFixed(1)
+                ctr: +(5 + Math.random() * 8).toFixed(1),
+                impressions: Math.floor(20000 + Math.random() * 80000),
+                page_views: Math.floor(5000 + Math.random() * 30000),
+                unique_visitors: Math.floor(3000 + Math.random() * 20000),
+                cta_clicks: Math.floor(100 + Math.random() * 1000),
+                cta_rate: +(2 + Math.random() * 8).toFixed(1)
             }));
         }
 
