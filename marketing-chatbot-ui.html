@@ -626,6 +626,14 @@
         body.compact-layout .left-sidebar,
         body.compact-layout .right-sidebar { display: none; }
         body.compact-layout .main-container { grid-template-columns: 1fr; }
+
+        /* Horizontal bar chart */
+        .hbar-chart { margin: 10px 0; display: grid; gap: 8px; }
+        .hbar-row { display: grid; grid-template-columns: 1.2fr 3fr 0.6fr; align-items: center; gap: 10px; }
+        .hbar-label { font-size: 12px; color: #374151; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .hbar-bar { background: #e5e7eb; height: 12px; border-radius: 6px; overflow: hidden; }
+        .hbar-bar span { display: block; height: 100%; background: linear-gradient(90deg, #60a5fa, #2563eb); border-radius: 6px; }
+        .hbar-value { font-size: 12px; font-weight: 600; color: #1f2937; text-align: right; }
     </style>
 </head>
 <body>
@@ -651,6 +659,54 @@
                         <option>Last 6 months</option>
                         <option>Custom range</option>
                     </select>
+                </div>
+            </div>
+
+            <div class="section">
+                <h3>Business Dimensions</h3>
+                <div class="control-group">
+                    <label>Domain</label>
+                    <select id="domainSelect">
+                        <option value="">All Domains</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label>Biz Category</label>
+                    <select id="bizCategorySelect">
+                        <option value="">All Categories</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label>Channel</label>
+                    <select id="sideChannelSelect">
+                        <option value="">All Channels</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="section">
+                <h3>KPIs & Actions</h3>
+                <div class="control-group">
+                    <label>KPI</label>
+                    <select id="kpiSelect">
+                        <option value="open_rate">Open Rate</option>
+                        <option value="completion_rate">Completion Rate</option>
+                        <option value="interaction_rate">Interaction Rate</option>
+                        <option value="ctr">CTR</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label>Top N</label>
+                    <select id="topNSelect">
+                        <option value="5">5</option>
+                        <option value="10" selected>10</option>
+                        <option value="20">20</option>
+                    </select>
+                </div>
+                <div class="input-group" style="gap: 8px;">
+                    <button class="secondary" id="btnTopN" title="Top N 内容">Top N 内容</button>
+                    <button class="secondary" id="btnCompare" title="指标对比">指标对比</button>
+                    <button class="secondary" id="btnComments" title="评论分析">评论分析</button>
                 </div>
             </div>
 
@@ -747,6 +803,8 @@
                 {"id": "rednote", "name": "小红书", "purposes": ["branding", "lead_gen", "seller_success", "survey"]},
                 {"id": "email", "name": "邮件营销", "purposes": ["branding", "lead_gen", "seller_success", "survey"]}
             ],
+            "domains": ["Ads", "Selection", "Supply Chain", "Compliance", "Branding", "Traffic & Conversion"],
+            "biz_categories": ["branding", "seller_education", "supply_chain", "traffic_and_conversion", "brand_own_tools", "compliance", "SPN", "paid_service", "marketplace"],
             "purpose_categories": {
                 "branding": ["branding", "event", "seller_segmentation", "marketplace"],
                 "seller_success": ["seller_education", "amazon_business", "supply_chain", "traffic_and_conversion", "brand_own_tools", "compliance", "SPN", "paid_service"],
@@ -950,6 +1008,8 @@
             populateChannels();
             populateMetrics();
             populateGuidanceQuestions();
+            populateBusinessFilters();
+            wireTopbar();
         }
 
         function populateChannels() {
@@ -959,6 +1019,14 @@
                 option.value = channel.id;
                 option.textContent = channel.name;
                 selector.appendChild(option);
+            });
+            // sync side channel selector
+            const side = document.getElementById('sideChannelSelect');
+            config.channels.forEach(channel => {
+                const o = document.createElement('option');
+                o.value = channel.id;
+                o.textContent = channel.name;
+                side.appendChild(o);
             });
         }
 
@@ -979,6 +1047,23 @@
                 li.textContent = question;
                 li.onclick = () => askQuestion(question);
                 questionsList.appendChild(li);
+            });
+        }
+
+        function populateBusinessFilters() {
+            const domainSelect = document.getElementById('domainSelect');
+            const bizSelect = document.getElementById('bizCategorySelect');
+            config.domains.forEach(d => {
+                const opt = document.createElement('option');
+                opt.value = d;
+                opt.textContent = d;
+                domainSelect.appendChild(opt);
+            });
+            config.biz_categories.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c;
+                opt.textContent = c.replaceAll('_', ' ');
+                bizSelect.appendChild(opt);
             });
         }
 
@@ -1764,6 +1849,270 @@
         document.getElementById('messageInput').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') sendMessage();
         });
+        document.getElementById('sideChannelSelect').addEventListener('change', function() {
+            const v = this.value;
+            if (v) {
+                document.getElementById('channelSelect').value = v;
+                selectChannel();
+            }
+        });
+        document.getElementById('btnTopN').addEventListener('click', runTopN);
+        document.getElementById('btnCompare').addEventListener('click', runKPIComparison);
+        document.getElementById('btnComments').addEventListener('click', runCommentAnalysis);
+
+        function wireTopbar() {
+            const layoutBtn = document.getElementById('layoutToggle');
+            const themeBtn = document.getElementById('themeToggle');
+            const exportBtn = document.getElementById('exportChatBtn');
+            const clearBtn = document.getElementById('clearChatBtn');
+            const scrollBtn = document.getElementById('scrollBottomBtn');
+
+            layoutBtn.addEventListener('click', () => {
+                document.body.classList.toggle('compact-layout');
+            });
+            themeBtn.addEventListener('click', () => {
+                document.body.classList.toggle('dark');
+                themeBtn.textContent = document.body.classList.contains('dark') ? '☀️' : '🌙';
+            });
+            exportBtn.addEventListener('click', exportChatAsText);
+            clearBtn.addEventListener('click', clearChat);
+            scrollBtn.addEventListener('click', () => {
+                const c = document.getElementById('chatMessages');
+                c.scrollTop = c.scrollHeight;
+            });
+            const chat = document.getElementById('chatMessages');
+            chat.addEventListener('scroll', () => {
+                const nearBottom = chat.scrollHeight - chat.scrollTop - chat.clientHeight < 80;
+                document.getElementById('scrollBottomBtn').classList.toggle('show', !nearBottom);
+            });
+        }
+
+        function exportChatAsText() {
+            const nodes = Array.from(document.querySelectorAll('#chatMessages .message'));
+            const lines = nodes.map(n => (n.classList.contains('user') ? '[User] ' : '[Bot] ') + (n.textContent || n.innerText).trim());
+            const blob = new Blob([lines.join('\n\n')], {type: 'text/plain;charset=utf-8'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'chat_export.txt';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+        }
+
+        function clearChat() {
+            const c = document.getElementById('chatMessages');
+            c.innerHTML = '<div class="welcome-message">\n                    <h3>Welcome to Marketing Analysis Chatbot</h3>\n                    <p>Select a channel and purpose to get started, or ask any question about your marketing data.</p>\n                </div>';
+        }
+
+        function getSelectedFilters() {
+            return {
+                channel: document.getElementById('channelSelect').value || document.getElementById('sideChannelSelect').value || (currentChannel && currentChannel.id) || '',
+                domain: document.getElementById('domainSelect').value || '',
+                bizCategory: document.getElementById('bizCategorySelect').value || '',
+                kpi: document.getElementById('kpiSelect').value,
+                topN: parseInt(document.getElementById('topNSelect').value, 10),
+                time: currentTimePeriod
+            };
+        }
+
+        function runTopN() {
+            const sel = getSelectedFilters();
+            const data = generateFakeArticles(sel);
+            const sorted = data.sort((a, b) => (b[sel.kpi] || 0) - (a[sel.kpi] || 0)).slice(0, sel.topN);
+            const chart = generateHorizontalBarChart(sorted, sel.kpi, 'title', sel.kpi.includes('rate') || sel.kpi === 'ctr' ? '%' : '');
+            const table = generateArticlesTable(sorted, sel.kpi);
+            const csvBtn = generateCSVButton(sorted, sel.kpi, `top_${sel.topN}_${sel.kpi}`);
+            const title = `<div class="chart-title">Top ${sel.topN} 内容 · ${labelForKPI(sel.kpi)} · ${sel.domain || 'All Domains'} ${sel.bizCategory ? '· ' + sel.bizCategory.replaceAll('_', ' ') : ''}</div>`;
+            addMessage(`${title}${chart}${table}${csvBtn}`, 'bot');
+        }
+
+        function runKPIComparison() {
+            const sel = getSelectedFilters();
+            const dims = sel.domain ? [sel.domain] : config.domains.slice(0, 5);
+            const series = dims.map(d => ({ name: d, values: generateKPITrend(sel.kpi) }));
+            const comp = generateMultiLineChart(series, labelForKPI(sel.kpi));
+            const title = `<div class="chart-title">指标对比 · ${labelForKPI(sel.kpi)} (${getTimePeriodLabel()})</div>`;
+            addMessage(`${title}${comp}`, 'bot');
+        }
+
+        function runCommentAnalysis() {
+            const sel = getSelectedFilters();
+            const channel = sel.channel || (currentChannel && currentChannel.id) || 'wechat';
+            const summary = summarizeComments(channel, currentPurpose, selectedCategories);
+            const donut = generateDonutChart(summary.sentiments, '情感分布');
+            const topics = generateTopicChips(summary.topics);
+            const samples = generateSampleComments(summary.samples);
+            const box = `<div class="chart-title">评论情感与主题分析 · ${currentChannel ? currentChannel.name : 'All Channels'}</div>${donut}${topics}${samples}`;
+            addMessage(box, 'bot');
+        }
+
+        function labelForKPI(kpi) {
+            const map = { open_rate: '打开率', completion_rate: '完读率', interaction_rate: '互动率', ctr: 'CTR' };
+            return map[kpi] || kpi;
+        }
+
+        function generateFakeArticles(sel) {
+            const baseTitles = [
+                '亚马逊选品策略全解析', '2024年热门品类趋势', '新手选品避坑指南', '选品工具使用技巧', '市场调研方法分享',
+                '广告投放优化实战', '供应链成本优化策略', '合规政策最新解读', '卖家运营增长案例', '旺季备货最佳实践',
+                '直播复盘与高频问题', '小红书站外引流技巧', '爆款打造SOP', '品牌故事如何讲', '广告关键词拓展'
+            ];
+            return baseTitles.map((t, idx) => ({
+                id: idx + 1,
+                title: t,
+                link: '#',
+                open_rate: +(6 + Math.random() * 6).toFixed(1),
+                completion_rate: +(60 + Math.random() * 35).toFixed(1),
+                interaction_rate: +(2 + Math.random() * 6).toFixed(1),
+                ctr: +(5 + Math.random() * 8).toFixed(1)
+            }));
+        }
+
+        function generateHorizontalBarChart(rows, valueKey, labelKey, unit) {
+            const max = Math.max(...rows.map(r => +r[valueKey]));
+            const items = rows.map(r => {
+                const pct = max === 0 ? 0 : Math.round((+r[valueKey] / max) * 100);
+                return `
+                <div class="hbar-row">
+                    <div class="hbar-label">${r[labelKey]}</div>
+                    <div class="hbar-bar"><span style="width:${pct}%"></span></div>
+                    <div class="hbar-value">${r[valueKey]}${unit}</div>
+                </div>`;
+            }).join('');
+            return `<div class="hbar-chart">${items}</div>`;
+        }
+
+        function generateArticlesTable(rows, primaryKPI) {
+            const headers = ['文章标题', '链接', labelForKPI(primaryKPI), '打开率', '完读率', '互动率'];
+            const body = rows.map(r => `
+                <tr>
+                    <td>${r.title}</td>
+                    <td><a href="${r.link}" target="_blank">查看</a></td>
+                    <td>${r[primaryKPI]}${primaryKPI.includes('rate') || primaryKPI === 'ctr' ? '%' : ''}</td>
+                    <td>${r.open_rate}%</td>
+                    <td>${r.completion_rate}%</td>
+                    <td>${r.interaction_rate}%</td>
+                </tr>
+            `).join('');
+            return `
+                <table class="metrics-table">
+                    <tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>
+                    ${body}
+                </table>
+            `;
+        }
+
+        function generateCSVButton(rows, primaryKPI, filename) {
+            const cols = ['title', 'link', primaryKPI, 'open_rate', 'completion_rate', 'interaction_rate'];
+            const header = ['title', 'link', primaryKPI, 'open_rate', 'completion_rate', 'interaction_rate'];
+            const csv = [header.join(',')].concat(rows.map(r => cols.map(c => r[c]).join(','))).join('\n');
+            const blob = new Blob([csv], {type: 'text/csv;charset=utf-8;'});
+            const url = URL.createObjectURL(blob);
+            const id = `csv_${Date.now()}`;
+            setTimeout(() => {
+                const a = document.getElementById(id);
+                if (a) a.href = url;
+            }, 0);
+            return `<div style="text-align:left;margin:8px 0;"><a id="${id}" download="${filename}.csv">导出CSV</a></div>`;
+        }
+
+        function generateKPITrend(kpi) {
+            const len = currentTimePeriod === 'Last 7 days' ? 7 : currentTimePeriod === 'Last 30 days' ? 5 : 6;
+            return Array.from({length: len}, () => +(5 + Math.random() * 8).toFixed(1));
+        }
+
+        function generateMultiLineChart(series, yLabel) {
+            const width = 500, height = 180, left = 50, bottom = 140;
+            const all = series.flatMap(s => s.values);
+            const max = Math.max(...all), min = Math.min(...all);
+            const range = max - min || 1; const pad = range * 0.2;
+            const pointsFor = (values) => values.map((v, i) => {
+                const x = left + (i * (400 / (values.length - 1)));
+                const y = bottom - ((v - min + pad) / (range + pad * 2)) * 100;
+                return `${x},${y}`;
+            }).join(' ');
+            const colors = ['#2563eb','#10b981','#f59e0b','#e11d48','#7c3aed'];
+            const polylines = series.map((s, idx) => `
+                <polyline class="chart-line" points="${pointsFor(s.values)}" stroke="${colors[idx%colors.length]}" stroke-width="2.5" />
+            `).join('');
+            const dots = series.map((s, idx) => s.values.map((v,i) => {
+                const x = left + (i * (400 / (s.values.length - 1)));
+                const y = bottom - ((v - min + pad) / (range + pad * 2)) * 100;
+                return `<circle cx="${x}" cy="${y}" r="3.5" fill="${colors[idx%colors.length]}" />`;
+            }).join('')).join('');
+            const legend = `<div class="chart-legend">${series.map((s,idx)=>`<div class="legend-item"><span class="legend-color" style="background:${colors[idx%colors.length]}"></span>${s.name}</div>`).join('')}</div>`;
+            return `
+                <div class="line-chart-container">
+                    <div class="chart-title-small">${yLabel} 对比趋势</div>
+                    <svg class="line-chart" viewBox="0 0 500 180" width="100%" height="180">
+                        <line class="chart-axis" x1="50" y1="40" x2="50" y2="140" />
+                        <line class="chart-axis" x1="50" y1="140" x2="450" y2="140" />
+                        ${polylines}
+                        ${dots}
+                        <text class="chart-label" x="35" y="45">${max.toFixed(1)}</text>
+                        <text class="chart-label" x="35" y="140">${min.toFixed(1)}</text>
+                    </svg>
+                    ${legend}
+                </div>
+            `;
+        }
+
+        function summarizeComments(channelId, purpose, categories) {
+            const all = voiceOfSellerData[channelId] || {};
+            const purposes = purpose ? {[purpose]: all[purpose] || {}} : all;
+            const bag = [];
+            Object.values(purposes).forEach(catMap => {
+                if (!catMap) return;
+                Object.entries(catMap).forEach(([cat, arr]) => {
+                    if (categories && categories.length && !categories.includes(cat)) return;
+                    (arr || []).forEach(x => bag.push(x));
+                });
+            });
+            const topics = {};
+            bag.forEach(x => { topics[x.category] = (topics[x.category] || 0) + 1; });
+            const sentiments = { positive: 0, neutral: 0, negative: 0 };
+            bag.forEach(x => { sentiments[x.sentiment] = (sentiments[x.sentiment] || 0) + 1; });
+            const sentimentsArr = [
+                {label:'积极', value: sentiments.positive, color:'#10b981'},
+                {label:'中性', value: sentiments.neutral, color:'#6b7280'},
+                {label:'消极', value: sentiments.negative, color:'#ef4444'}
+            ];
+            const topTopics = Object.entries(topics).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([k,v])=>({label:k.replaceAll('_',' '), value:v}));
+            const samples = bag.slice(0,6);
+            return { topics: topTopics, sentiments: sentimentsArr, samples };
+        }
+
+        function generateDonutChart(parts, centerLabel) {
+            const total = parts.reduce((s,p)=>s+p.value,0) || 1;
+            let angle = 0;
+            const gradients = parts.map(p => {
+                const start = angle; const end = angle + (p.value/total)*360; angle = end; return `${p.color} ${start}deg ${end}deg`;
+            }).join(', ');
+            const labels = parts.map((p,i)=>`<div style="display:flex;align-items:center;gap:6px;margin:4px 0;"><span class="legend-color" style="background:${p.color}"></span>${p.label}: <b>${p.value}</b></div>`).join('');
+            return `
+                <div style="display:flex;align-items:center;gap:18px;margin:10px 0;">
+                    <div class="pie-chart" style="background: conic-gradient(${gradients});">
+                        <div class="pie-center">${centerLabel}</div>
+                    </div>
+                    <div style="font-size:12px;">${labels}</div>
+                </div>
+            `;
+        }
+
+        function generateTopicChips(topics) {
+            return `<div style="text-align:left;margin:8px 0;">
+                <div class="chart-title-small">主题TOP ${topics.length}</div>
+                <div class="category-chips">${topics.map(t=>`<div class="chip selected">${t.label} (${t.value})</div>`).join('')}</div>
+            </div>`;
+        }
+
+        function generateSampleComments(samples) {
+            return `<div class="voice-of-seller"><div class="voice-title">代表性评论</div>
+                ${samples.map(s=>`💬 "${s.text}" <em style="color:#666;">(${s.sentiment})</em>`).join('<br><br>')}
+            </div>`;
+        }
         
         function updateDataTimestamp() {
             const now = new Date();
