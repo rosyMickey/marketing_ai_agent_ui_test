@@ -626,6 +626,41 @@
         body.compact-layout .left-sidebar,
         body.compact-layout .right-sidebar { display: none; }
         body.compact-layout .main-container { grid-template-columns: 1fr; }
+
+        /* Filters and results */
+        .filters-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+        .topn-controls { display: flex; gap: 8px; align-items: center; }
+        .btn { padding: 10px 14px; border: none; border-radius: 6px; cursor: pointer; background: #3498db; color: #fff; }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .btn.secondary { background: #6c757d; }
+
+        .results-panel { background: #f8f9fa; border-bottom: 1px solid #dee2e6; padding: 12px 20px; display: none; }
+        .results-header { display: flex; justify-content: space-between; align-items: center; }
+        .results-title { font-size: 14px; font-weight: bold; color: #2c3e50; }
+        .results-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
+        .results-table th, .results-table td { padding: 8px; border-bottom: 1px solid #dee2e6; text-align: left; }
+        .results-table th { background: #eef2f7; color: #2c3e50; }
+        .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 10px; background: #e8f4fd; color: #2980b9; }
+
+        /* Comments insights */
+        .insights-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+        .insight-card { background: white; border: 1px solid #dee2e6; border-radius: 8px; padding: 12px; }
+        .bar-row { display: flex; align-items: center; gap: 8px; }
+        .bar { height: 8px; background: #3498db; border-radius: 4px; }
+        .bar.neg { background: #e74c3c; }
+        .bar.neu { background: #95a5a6; }
+        .bar.pos { background: #27ae60; }
+
+        /* Chart builder */
+        .chart-builder { background: white; border: 1px solid #dee2e6; border-radius: 8px; padding: 12px; }
+        .chart-builder .row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+
+        /* Dark overrides for new blocks */
+        body.dark .results-panel { background: #0b1220; border-color: #1f2937; }
+        body.dark .results-table th { background: #0b1220; color: #d1d5db; }
+        body.dark .results-table td { border-color: #1f2937; color: #d1d5db; }
+        body.dark .insight-card, body.dark .chart-builder { background: #111827; border-color: #1f2937; }
+        body.dark .pill { background: #0b2b4a; color: #93c5fd; }
     </style>
 </head>
 <body>
